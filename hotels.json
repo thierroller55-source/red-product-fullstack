@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "nom": "casa",
+    "adresse": "plage de ngor",
+    "email": "thierroller55@gmail.com",
+    "tel": "777808497",
+    "prix": "35.000",
+    "devise": "F XOF"
+  },
+  {
+    "id": 2,
+    "nom": "Almadie",
+    "adresse": "pointe des Almadies",
+    "email": "thierroller55@gmail.com",
+    "tel": "773342548",
+    "prix": "45000",
+    "devise": "F XOF"
+  },
+  {
+    "id": 3,
+    "nom": "casa",
+    "adresse": "plage de ngor",
+    "email": "thierroller55@gmail.com",
+    "tel": "773342548",
+    "prix": "80000",
+    "devise": "F XOF"
+  },
+  {
+    "id": 4,
+    "nom": "residence de birahim",
+    "adresse": "lac rose",
+    "email": "thierroller55@gmail.com",
+    "tel": "773342548",
+    "prix": "45000",
+    "devise": "F XOF"
+  }
+]
