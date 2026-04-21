@@ -31,7 +31,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ success: false, message: "Accès refusé" });
 
-    const token = jwt.sign({ id: user._id }, 'VOTRE_CLE_SECRET', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ success: true, message: "Accès passé", token });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur." });
@@ -57,7 +57,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     // 3. SI L'EMAIL EXISTE -> ON GÉNÈRE UN TOKEN
-    const token = jwt.sign({ id: user._id }, 'VOTRE_CLE_SECRET', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     // 4. On renvoie le message ET le token au frontend
     return res.status(200).json({ 

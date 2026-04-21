@@ -2,8 +2,8 @@
 // 1. CONFIGURATION ET CONSTANTES
 // ============================================================
 // Par (ton futur lien Render) :
-const API_HOTELS = 'https://ton-projet-api.onrender.com/api/hotels';
-const API_AUTH   = 'http://localhost:3000/api/auth';
+const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
+const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';
 
 // Récupération du badge (Token) pour les actions protégées
 const getToken = () => localStorage.getItem('token');
