@@ -206,7 +206,7 @@ function filterHotels() {
         card.classList.toggle('hidden', !match);
     });
 }
-
+//  pour la button cacher le mot de passe
 function togglePassword() {
     const input = document.getElementById('password');
     if (input) input.type = (input.type === 'password') ? 'text' : 'password';
