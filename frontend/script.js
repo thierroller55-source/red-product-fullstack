@@ -36,18 +36,15 @@ function ajouterCarteHotel(hotel) {
     card.className = 'hotel-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer relative';
     card.setAttribute('data-search', `${hotel.nom} ${hotel.adresse}`.toLowerCase());
     
+    // ON A ENLEVÉ LE <button> DE LA PARTIE CI-DESSOUS
     card.innerHTML = `
         <div class="overflow-hidden h-44 relative">
             <img src="${imgUrl}" alt="${hotel.nom}" class="w-full h-full object-cover" />
-            <button onclick="event.stopPropagation(); supprimerHotel('${hotel._id}')" 
-                    class="absolute top-2 right-2 bg-white/80 p-2 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
         </div>
         <div class="p-4">
-            <p class="text-[10px] text-orange font-medium mb-0.5">${hotel.adresse}</p>
+            <p class="text-[10px] text-orange-400 font-medium mb-0.5">${hotel.adresse}</p>
             <h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3>
-            <p class="text-xs text-gray-600">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p>
+            <p class="text-sm text-gray-500">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p>
         </div>`;
     grid.appendChild(card);
 }
