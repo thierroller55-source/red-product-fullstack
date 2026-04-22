@@ -11,7 +11,12 @@ router.get('/', hotelController.getHotels);
 
 // On ajoute 'upload.single('image')' entre l'URL et le contrôleur
 router.post('/', upload.single('image'), hotelController.addHotel);
+
+// GET    /api/hotels/stats → Récupérer les statistiques
+router.get('/stats/count', hotelController.getStats);
+
 // DELETE /api/hotels/:id   → Supprimer un hôtel
 router.delete('/:id', hotelController.deleteHotel);
+
 
 module.exports = router;

@@ -27,6 +27,39 @@ async function chargerHotels() {
     } catch (err) { console.error('Erreur chargement:', err); }
 }
 
+// pour chargement des stats du dashboard
+async function chargerStatsDashboard() {
+    const res = await fetch('https://red-product-fullstack.onrender.com/api/hotels/stats/count');
+    const stats = await res.json();
+
+    // On affiche les vrais chiffres avec une animation
+    animerChiffre("statHotels", stats.hotels);
+    animerChiffre("statUsers", stats.users);
+    animerChiffre("statMessages", stats.messages);
+    animerChiffre("statEmails", stats.emails);
+    animerChiffre("statFormulaires", stats.formulaires);
+    animerChiffre("statEnquetes", stats.enquetes);
+}
+
+// Petite fonction pour faire grimper le chiffre de 0 à la valeur réelle
+function animerChiffre(id, fin) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let debut = 0;
+    const duree = 1000; // 1 seconde
+    const increment = fin / (duree / 16);
+    
+    const timer = setInterval(() => {
+        debut += increment;
+        if (debut >= fin) {
+            el.textContent = fin;
+            clearInterval(timer);
+        } else {
+            el.textContent = Math.floor(debut);
+        }
+    }, 16);
+}
+
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
     const imgUrl = hotel.image || 'https://placehold.co/400x250?text=Pas+d+image';
@@ -239,6 +272,7 @@ function setupNotifications() {
     }
 }
 
+
 // ============================================================
 // 5. INITIALISATION (LANCE TOUT)
 // ============================================================
@@ -254,6 +288,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const registrationForm = document.getElementById('registrationForm');
     if (registrationForm) {
         registrationForm.addEventListener('submit', handleRegister);
+    }
+     // Page Dashboard
+    if (document.getElementById('statHotels')) {
+        chargerStatsDashboard();
     }
 
     // Page Mot de passe oublié

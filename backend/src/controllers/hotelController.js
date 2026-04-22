@@ -39,3 +39,25 @@ exports.deleteHotel = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+// Ajoute ce code à la fin de ton fichier hotelController.js pour la route de statistiques :
+const User = require('../models/userModel'); // Assure-toi d'importer le modèle User
+
+exports.getStats = async (req, res) => {
+  try {
+    const nbHotels = await Hotel.countDocuments(); // Compte les hôtels
+    const nbUsers = await User.countDocuments();   // Compte les utilisateurs
+
+    res.json({
+      hotels: nbHotels,
+      users: nbUsers,
+      messages: 45,    // On peut laisser statique ou créer une collection plus tard
+      emails: 12,
+      formulaires: 8,
+      enquetes: 3
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
