@@ -75,7 +75,7 @@ function ajouterCarteHotel(hotel) {
             <img src="${imgUrl}" alt="${hotel.nom}" class="w-full h-full object-cover" />
         </div>
         <div class="p-4">
-            <p class="text-[10px] text-orange-400 font-medium mb-0.5">${hotel.adresse}</p>
+            <p class="text-[10px] text-orange font-medium mb-0.5">${hotel.adresse}</p>
             <h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3>
             <p class="text-sm text-gray-500">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p>
         </div>`;
