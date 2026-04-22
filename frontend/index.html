@@ -171,13 +171,14 @@
                 </div>
 
                 <!-- Déconnexion -->
-                <a href="se connect%C3%A9.html" class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500
-                               rounded-full flex items-center justify-center transition-colors text-gray-400">
+                <!-- On remplace le href par un appel à la fonction seDeconnecter -->
+                <a href="#" onclick="seDeconnecter(event)"
+                    class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-colors text-gray-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
                     </svg>
                 </a>
-            </div>
+                </dDiv>
         </header>
 
         <!-- ✅ Barre recherche mobile -->
@@ -458,7 +459,8 @@
 
 
 
-    
+
     <script src="script.js"></script>
 </body>
+
 </html>
