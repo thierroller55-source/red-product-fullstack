@@ -47,9 +47,10 @@ function animerChiffre(id, fin) {
     }, 16);
 }
 
+// ── AJOUTER UNE CARTE HÔTEL (SÉCURISÉE) ───────────────────
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
-    const token = localStorage.getItem('token'); // On vérifie si tu es l'admin (badge présent)
+    const token = localStorage.getItem('token'); // Vérifie si tu es connecté
     const imgUrl = hotel.image || 'https://placehold.co/400x250?text=Pas+d+image';
 
     const card = document.createElement('div');
@@ -57,7 +58,7 @@ function ajouterCarteHotel(hotel) {
     card.className = 'hotel-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer relative';
     card.setAttribute('data-search', `${hotel.nom} ${hotel.adresse}`.toLowerCase());
 
-    // 🟢 On prépare le code du bouton supprimer UNIQUEMENT si le token existe
+    // 🟢 On crée le bouton UNIQUEMENT si le Token est présent (Admin connecté)
     const deleteBtn = token ? `
         <button onclick="event.stopPropagation(); supprimerHotel('${hotel._id}')" 
                 class="absolute top-2 right-2 bg-red-600 hover:bg-red-800 text-white p-2 rounded-full shadow-lg transition-colors z-10">
@@ -69,11 +70,11 @@ function ajouterCarteHotel(hotel) {
 
     card.innerHTML = `
         <div class="overflow-hidden h-44 relative">
-            <img src="${imgUrl}" class="w-full h-full object-cover" />
+            <img src="${imgUrl}" alt="${hotel.nom}" class="w-full h-full object-cover" />
             ${deleteBtn} 
         </div>
         <div class="p-4">
-            <p class="text-[10px] text-orange font-medium mb-0.5">${hotel.adresse}</p>
+            <p class="text-[10px] text-orange-400 font-medium mb-0.5">${hotel.adresse}</p>
             <h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3>
             <p class="text-xs text-gray-600">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p>
         </div>`;
@@ -166,6 +167,34 @@ function setupNotifications() {
     }
 }
 
+// ── FONCTION POUR SUPPRIMER UN HÔTEL ──────────────────────
+async function supprimerHotel(id) {
+    if (!confirm("Voulez-vous vraiment supprimer cet hôtel ?")) return;
+
+    try {
+        const response = await fetch(`${API_HOTELS}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getToken()}` // Utilise ton badge admin
+            }
+        });
+
+        if (response.ok) {
+            // Supprime la carte de l'écran immédiatement
+            const card = document.getElementById(`hotel-${id}`);
+            if (card) card.remove();
+            
+            // Rafraîchit le compteur d'hôtels
+            chargerHotels(); 
+            alert("✅ Hôtel supprimé avec succès.");
+        } else {
+            alert("❌ Erreur : Vous n'avez pas l'autorisation.");
+        }
+    } catch (error) {
+        console.error("Erreur suppression:", error);
+        alert("Impossible de contacter le serveur.");
+    }
+}
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
