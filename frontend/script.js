@@ -13,14 +13,37 @@ const getToken = () => localStorage.getItem('token');
 async function chargerHotels() {
     const grid = document.getElementById('hotelsGrid');
     if (!grid) return;
+
     try {
-        const response = await fetch(API_HOTELS);
+        // 🟢 ON AJOUTE LES HEADERS AVEC LE TOKEN ICI
+        const response = await fetch(API_HOTELS, {
+            headers: {
+                'Authorization': `Bearer ${getToken()}` // On envoie le badge au serveur
+            }
+        });
+
         const hotels = await response.json();
+
+        // 🟢 SÉCURITÉ : On vérifie si c'est bien une liste (un tableau)
+        if (!Array.isArray(hotels)) {
+            console.error("Le serveur a renvoyé une erreur :", hotels.message);
+            // Si le token est mauvais, on peut rediriger vers le login
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = 'se connecté.html';
+            }
+            return;
+        }
+
         grid.innerHTML = ''; 
         hotels.forEach(hotel => ajouterCarteHotel(hotel));
+        
         const count = document.getElementById('hotelCount');
         if (count) count.textContent = hotels.length;
-    } catch (err) { console.error('Erreur chargement:', err); }
+
+    } catch (err) { 
+        console.error('Erreur chargement hôtels :', err); 
+    }
 }
 
 async function chargerStatsDashboard() {
