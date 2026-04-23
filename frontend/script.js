@@ -9,29 +9,23 @@ const getToken = () => localStorage.getItem('token');
 // ============================================================
 // 2. GESTION DES HÔTELS (DÉJÀ FAIT)
 // ============================================================
-
 async function chargerHotels() {
     const grid = document.getElementById('hotelsGrid');
     if (!grid) return;
 
     try {
-        // 🟢 ON AJOUTE LES HEADERS AVEC LE TOKEN ICI
+        // 🟢 ON ENVOIE LE TOKEN AU SERVEUR
         const response = await fetch(API_HOTELS, {
             headers: {
-                'Authorization': `Bearer ${getToken()}` // On envoie le badge au serveur
+                'Authorization': `Bearer ${getToken()}` 
             }
         });
 
         const hotels = await response.json();
 
-        // 🟢 SÉCURITÉ : On vérifie si c'est bien une liste (un tableau)
+        // 🟢 SÉCURITÉ : On vérifie si c'est une liste ou une erreur
         if (!Array.isArray(hotels)) {
-            console.error("Le serveur a renvoyé une erreur :", hotels.message);
-            // Si le token est mauvais, on peut rediriger vers le login
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = 'se connecté.html';
-            }
+            console.error("Erreur serveur :", hotels.message);
             return;
         }
 
@@ -41,9 +35,7 @@ async function chargerHotels() {
         const count = document.getElementById('hotelCount');
         if (count) count.textContent = hotels.length;
 
-    } catch (err) { 
-        console.error('Erreur chargement hôtels :', err); 
-    }
+    } catch (err) { console.error('Erreur chargement:', err); }
 }
 
 async function chargerStatsDashboard() {
