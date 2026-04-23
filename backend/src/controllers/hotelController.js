@@ -3,7 +3,19 @@ const Hotel = require('../models/hotelModel');
 // ── 1. RÉCUPÉRER TOUS LES HÔTELS ─────────────────────────────
 exports.getHotels = async (req, res) => {
   try {
-    const hotels = await Hotel.find().sort({ createdAt: -1 });
+    let hotels;
+
+    // 1. SI l'utilisateur connecté est ADMIN : il voit TOUT
+    if (req.user.role === 'admin') {
+      console.log("Accès Admin : Récupération de tous les hôtels.");
+      hotels = await Hotel.find().sort({ createdAt: -1 });
+    } 
+    // 2. SI l'utilisateur est CLIENT : il ne voit QUE SES hôtels
+    else {
+      console.log(`Accès Client (${req.user.id}) : Récupération des hôtels privés.`);
+      hotels = await Hotel.find({ owner: req.user.id }).sort({ createdAt: -1 });
+    }
+
     res.json(hotels);
   } catch (error) {
     res.status(500).json({ message: error.message });
