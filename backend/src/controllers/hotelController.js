@@ -15,18 +15,24 @@ exports.addHotel = async (req, res) => {
   try {
     const hotelData = req.body;
 
-    // Si Multer a bien envoyé l'image sur Cloudinary, 
-    // l'URL se trouve dans req.file.path
+    // 1. On récupère l'image si elle existe
     if (req.file) {
       hotelData.image = req.file.path; 
     }
+
+    // 2. IMPORTANT : On définit le propriétaire TOUT LE TEMPS
+    // (Cette ligne doit être en dehors du if de l'image)
+    hotelData.owner = req.user.id;
 
     const nouvelHotel = new Hotel(hotelData);
     await nouvelHotel.save();
 
     res.status(201).json(nouvelHotel);
   } catch (error) {
-    res.status(400).json({ message: "Erreur lors de l'ajout", error: error.message });
+    res.status(400).json({ 
+        message: "Erreur lors de l'ajout", 
+        error: error.message 
+    });
   }
 };
 

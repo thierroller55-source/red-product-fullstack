@@ -1,22 +1,14 @@
-const express        = require('express');
-const router         = express.Router();
+const express         = require('express');
+const router          = express.Router();
 const hotelController = require('../controllers/hotelController');
-const multer = require('multer');
-const storage = require('../config/cloudinary');
-const upload = multer({ storage });
+const auth            = require('../middlewares/auth.middleware'); 
+const storage         = require('../config/cloudinary');
+const multer          = require('multer');
+const upload          = multer({ storage });
 
-
-// GET    /api/hotels       → Récupérer tous les hôtels
-router.get('/', hotelController.getHotels);
-
-// On ajoute 'upload.single('image')' entre l'URL et le contrôleur
-router.post('/', upload.single('image'), hotelController.addHotel);
-
-// GET    /api/hotels/stats → Récupérer les statistiques
-router.get('/stats/count', hotelController.getStats);
-
-// DELETE /api/hotels/:id   → Supprimer un hôtel
-router.delete('/:id', hotelController.deleteHotel);
-
+// Routes protégées par 'auth'
+router.get('/', auth, hotelController.getHotels);
+router.post('/', auth, upload.single('image'), hotelController.addHotel);
+router.delete('/:id', auth, hotelController.deleteHotel);
 
 module.exports = router;
