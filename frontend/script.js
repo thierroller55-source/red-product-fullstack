@@ -14,38 +14,30 @@ async function chargerHotels() {
     if (!grid) return;
 
     try {
-        // 🟢 ON RÉCUPÈRE LE TOKEN DANS LE LOCALSTORAGE
-        const token = localStorage.getItem('token');
-
         const response = await fetch(API_HOTELS, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // ON ENVOIE LE BADGE ICI
-                'Content-Type': 'application/json'
+                // 🟢 CETTE LIGNE EST OBLIGATOIRE :
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
 
         const hotels = await response.json();
 
-        // 🟢 SÉCURITÉ : Si le serveur a dit "Non" (Erreur 401)
-        if (!response.ok) {
-            console.error("Accès refusé par le serveur");
+        // 🟢 SÉCURITÉ : Si le serveur répond 401, on renvoie au login
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = 'se connecté.html';
             return;
         }
 
-        // On vide et on affiche
-        grid.innerHTML = ''; 
-        // On vérifie que c'est bien une liste avant de boucler
+        // On vide et on affiche seulement si c'est une liste (Array)
         if (Array.isArray(hotels)) {
+            grid.innerHTML = ''; 
             hotels.forEach(hotel => ajouterCarteHotel(hotel));
         }
 
-        const count = document.getElementById('hotelCount');
-        if (count) count.textContent = hotels.length;
-
-    } catch (err) { 
-        console.error('Erreur réseau :', err); 
-    }
+    } catch (err) { console.error('Erreur:', err); }
 }
 
 async function chargerStatsDashboard() {
