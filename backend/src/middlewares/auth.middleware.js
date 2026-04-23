@@ -12,6 +12,7 @@ const auth = async (req, res, next) => {
 
     // 2. On vérifie si le token est valide avec notre clé secrète
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id); // On récupère tout l'utilisateur (id + role)
 
     // 3. On cherche l'utilisateur dans la base pour avoir son RÔLE à jour
     const user = await User.findById(decoded.id);
