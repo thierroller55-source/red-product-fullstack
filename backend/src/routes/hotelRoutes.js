@@ -8,6 +8,7 @@ const upload          = multer({ storage });
 
 // Routes protégées par 'auth'
 router.get('/', auth, hotelController.getHotels);
+router.get('/stats/count', auth, hotelController.getStats);
 router.post('/', auth, upload.single('image'), hotelController.addHotel);
 router.delete('/:id', auth, hotelController.deleteHotel);
 

@@ -42,15 +42,33 @@ async function chargerHotels() {
 
 async function chargerStatsDashboard() {
     try {
-        const res = await fetch('https://red-product-fullstack.onrender.com/api/hotels/stats/count');
-        const stats = await res.json();
+        const response = await fetch(`${API_HOTELS}/stats/count`, {
+            method: 'GET',
+            headers: {
+                // 🟢 ON AJOUTE LE TOKEN ICI AUSSI !
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+
+        // Si le serveur répond une erreur (ex: Token expiré)
+        if (!response.ok) {
+            console.error("Impossible de charger les stats (Accès refusé)");
+            return;
+        }
+
+        const stats = await response.json();
+
+        // On affiche les vrais chiffres avec l'animation
         animerChiffre("statHotels", stats.hotels);
         animerChiffre("statUsers", stats.users);
         animerChiffre("statMessages", stats.messages);
         animerChiffre("statEmails", stats.emails);
         animerChiffre("statFormulaires", stats.formulaires);
         animerChiffre("statEnquetes", stats.enquetes);
-    } catch (e) { console.error(e); }
+
+    } catch (err) { 
+        console.error('Erreur chargement stats:', err); 
+    }
 }
 
 function animerChiffre(id, fin) {
