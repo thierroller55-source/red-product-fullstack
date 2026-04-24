@@ -7,68 +7,47 @@ const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';
 const getToken = () => localStorage.getItem('token');
 
 // ============================================================
-// 2. GESTION DES HÔTELS (DÉJÀ FAIT)
+// 2. GESTION DES HÔTELS (MONGODB + CLOUDINARY)
 // ============================================================
+
 async function chargerHotels() {
     const grid = document.getElementById('hotelsGrid');
     if (!grid) return;
-
     try {
         const response = await fetch(API_HOTELS, {
-            method: 'GET',
-            headers: {
-                // 🟢 CETTE LIGNE EST OBLIGATOIRE :
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-
         const hotels = await response.json();
-
-        // 🟢 SÉCURITÉ : Si le serveur répond 401, on renvoie au login
+        
         if (response.status === 401) {
             localStorage.removeItem('token');
             window.location.href = 'se connecté.html';
             return;
         }
 
-        // On vide et on affiche seulement si c'est une liste (Array)
         if (Array.isArray(hotels)) {
             grid.innerHTML = ''; 
             hotels.forEach(hotel => ajouterCarteHotel(hotel));
+            const count = document.getElementById('hotelCount');
+            if (count) count.textContent = hotels.length;
         }
-
-    } catch (err) { console.error('Erreur:', err); }
+    } catch (err) { console.error('Erreur chargement:', err); }
 }
 
 async function chargerStatsDashboard() {
     try {
         const response = await fetch(`${API_HOTELS}/stats/count`, {
-            method: 'GET',
-            headers: {
-                // 🟢 ON AJOUTE LE TOKEN ICI AUSSI !
-                'Authorization': `Bearer ${getToken()}`
-            }
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-
-        // Si le serveur répond une erreur (ex: Token expiré)
-        if (!response.ok) {
-            console.error("Impossible de charger les stats (Accès refusé)");
-            return;
-        }
-
+        if (!response.ok) return;
         const stats = await response.json();
-
-        // On affiche les vrais chiffres avec l'animation
         animerChiffre("statHotels", stats.hotels);
         animerChiffre("statUsers", stats.users);
         animerChiffre("statMessages", stats.messages);
         animerChiffre("statEmails", stats.emails);
         animerChiffre("statFormulaires", stats.formulaires);
         animerChiffre("statEnquetes", stats.enquetes);
-
-    } catch (err) { 
-        console.error('Erreur chargement stats:', err); 
-    }
+    } catch (e) { console.error(e); }
 }
 
 function animerChiffre(id, fin) {
@@ -82,10 +61,9 @@ function animerChiffre(id, fin) {
     }, 16);
 }
 
-// ── AJOUTER UNE CARTE HÔTEL (SÉCURISÉE) ───────────────────
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
-    const token = localStorage.getItem('token'); // Vérifie si tu es connecté
+    const token = localStorage.getItem('token'); 
     const imgUrl = hotel.image || 'https://placehold.co/400x250?text=Pas+d+image';
 
     const card = document.createElement('div');
@@ -93,15 +71,11 @@ function ajouterCarteHotel(hotel) {
     card.className = 'hotel-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer relative';
     card.setAttribute('data-search', `${hotel.nom} ${hotel.adresse}`.toLowerCase());
 
-    // 🟢 On crée le bouton UNIQUEMENT si le Token est présent (Admin connecté)
     const deleteBtn = token ? `
         <button onclick="event.stopPropagation(); supprimerHotel('${hotel._id}')" 
                 class="absolute top-2 right-2 bg-red-600 hover:bg-red-800 text-white p-2 rounded-full shadow-lg transition-colors z-10">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-        </button>
-    ` : "";
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        </button>` : "";
 
     card.innerHTML = `
         <div class="overflow-hidden h-44 relative">
@@ -113,7 +87,6 @@ function ajouterCarteHotel(hotel) {
             <h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3>
             <p class="text-xs text-gray-600">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p>
         </div>`;
-
     grid.appendChild(card);
 }
 
@@ -133,8 +106,16 @@ async function addHotel() {
     } catch (e) { console.error(e); }
 }
 
+async function supprimerHotel(id) {
+    if (!confirm("Supprimer cet hôtel ?")) return;
+    try {
+        const response = await fetch(`${API_HOTELS}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (response.ok) { document.getElementById(`hotel-${id}`).remove(); chargerHotels(); }
+    } catch (error) { console.error(error); }
+}
+
 // ============================================================
-// 3. AUTHENTIFICATION (LOGIN, REGISTER, LOGOUT)
+// 3. AUTHENTIFICATION
 // ============================================================
 
 async function seConnecter(event) {
@@ -159,44 +140,36 @@ async function handleRegister(event) {
     else { alert("❌ Erreur"); }
 }
 
-async function handleForgotPassword(event) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const res = await fetch(`${API_AUTH}/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
-    const data = await res.json();
-    alert(data.message);
-}
-
-// 🟢 NOUVEAU : LA FONCTION DE DÉCONNEXION
 function seDeconnecter(event) {
     if (event) event.preventDefault();
-    localStorage.removeItem('token'); // On supprime le badge
-    window.location.replace('se connecté.html'); // On renvoie au login et on vide l'historique
+    localStorage.removeItem('token'); 
+    window.location.replace('se connecté.html'); 
 }
 
-// 🟢 NOUVELLE FONCTION RECHERCHER
+// ============================================================
+// 4. UI HELPERS (MENUS, RECHERCHE, MODALS)
+// ============================================================
+
+// 🟢 NOUVEAU : Fonction pour ouvrir/fermer la recherche sur mobile
+function toggleSearchMobile() {
+    const bar = document.getElementById('searchMobile');
+    if (bar) bar.classList.toggle('hidden');
+}
+
+// 🟢 AMÉLIORÉ : Fonction de recherche pour Desktop ET Mobile
 function filterHotels() {
-    // 1. On cherche la barre desktop ET la barre mobile
-    const searchInput = document.getElementById('searchInput');
-    const searchMobile = document.querySelector('#searchMobile input'); // Cible l'input dans la zone mobile
+    const desktopInput = document.getElementById('searchInput')?.value || "";
+    const mobileInput = document.querySelector('#searchMobile input')?.value || "";
     
-    // 2. On récupère la valeur de celle qui est utilisée
-    const query = (searchInput?.value || searchMobile?.value || "").toLowerCase();
+    // On prend la valeur de l'une ou l'autre barre
+    const query = (desktopInput || mobileInput).toLowerCase();
     
     const cards = document.querySelectorAll('.hotel-card');
     cards.forEach(card => {
         const searchText = card.getAttribute('data-search') || "";
-        // 3. On cache ou on affiche
-        if (searchText.includes(query)) {
-            card.classList.remove('hidden');
-        } else {
-            card.classList.add('hidden');
-        }
+        card.classList.toggle('hidden', !searchText.includes(query));
     });
 }
-// ============================================================
-// 4. UI HELPERS (DÉJÀ FAIT)
-// ============================================================
 
 function togglePassword() {
     const input = document.getElementById('password');
@@ -222,40 +195,10 @@ function setupNotifications() {
     }
 }
 
-// ── FONCTION POUR SUPPRIMER UN HÔTEL ──────────────────────
-async function supprimerHotel(id) {
-    if (!confirm("Voulez-vous vraiment supprimer cet hôtel ?")) return;
-
-    try {
-        const response = await fetch(`${API_HOTELS}/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getToken()}` // Utilise ton badge admin
-            }
-        });
-
-        if (response.ok) {
-            // Supprime la carte de l'écran immédiatement
-            const card = document.getElementById(`hotel-${id}`);
-            if (card) card.remove();
-            
-            // Rafraîchit le compteur d'hôtels
-            chargerHotels(); 
-            alert("✅ Hôtel supprimé avec succès.");
-        } else {
-            alert("❌ Erreur : Vous n'avez pas l'autorisation.");
-        }
-    } catch (error) {
-        console.error("Erreur suppression:", error);
-        alert("Impossible de contacter le serveur.");
-    }
-}
 // ============================================================
-// 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
+// 5. INITIALISATION
 // ============================================================
-
 window.addEventListener('DOMContentLoaded', () => {
-    // 🛡️ LE GARDIEN : Vérifie si on a le droit d'être ici
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
     const isPublic = path.includes('connect') || path.includes('inscription');
@@ -265,7 +208,6 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Le reste s'active seulement si on a passé le gendarme
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
@@ -274,9 +216,6 @@ window.addEventListener('DOMContentLoaded', () => {
      
     const registrationForm = document.getElementById('registrationForm');
     if (registrationForm) registrationForm.addEventListener('submit', handleRegister);
-
-    const forgotForm = document.getElementById('forgotPasswordForm');
-    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
 
     setupNotifications();
 });
