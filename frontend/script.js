@@ -174,6 +174,19 @@ function seDeconnecter(event) {
     window.location.replace('se connecté.html'); // On renvoie au login et on vide l'historique
 }
 
+// 🟢 NOUVELLE FONCTION RECHERCHER
+function filterHotels() {
+    const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
+    const cards = document.querySelectorAll('.hotel-card');
+    cards.forEach(card => {
+        const searchText = card.getAttribute('data-search') || "";
+        if (searchText.includes(query)) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+}
 // ============================================================
 // 4. UI HELPERS (DÉJÀ FAIT)
 // ============================================================
