@@ -176,10 +176,17 @@ function seDeconnecter(event) {
 
 // 🟢 NOUVELLE FONCTION RECHERCHER
 function filterHotels() {
-    const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
+    // 1. On cherche la barre desktop ET la barre mobile
+    const searchInput = document.getElementById('searchInput');
+    const searchMobile = document.querySelector('#searchMobile input'); // Cible l'input dans la zone mobile
+    
+    // 2. On récupère la valeur de celle qui est utilisée
+    const query = (searchInput?.value || searchMobile?.value || "").toLowerCase();
+    
     const cards = document.querySelectorAll('.hotel-card');
     cards.forEach(card => {
         const searchText = card.getAttribute('data-search') || "";
+        // 3. On cache ou on affiche
         if (searchText.includes(query)) {
             card.classList.remove('hidden');
         } else {
