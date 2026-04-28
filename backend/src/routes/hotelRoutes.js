@@ -7,6 +7,8 @@ const multer          = require('multer');
 const upload          = multer({ storage });
 
 // Routes protégées par 'auth'
+// Ligne 10
+router.get('/notifications', auth, hotelController.getNotifications);
 router.get('/', auth, hotelController.getHotels);
 router.get('/stats/count', auth, hotelController.getStats);
 router.post('/', auth, upload.single('image'), hotelController.addHotel);

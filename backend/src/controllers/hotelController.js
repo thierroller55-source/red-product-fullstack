@@ -1,46 +1,39 @@
 const Hotel = require('../models/hotelModel');
-const Notification = require('../models/notificationModel'); // 🟢 N'oublie pas l'import en haut !
+const User = require('../models/userModel');
+const Notification = require('../models/notificationModel');
 
-// ── 1. RÉCUPÉRER TOUS LES HÔTELS ─────────────────────────────
-exports.addHotel = async (req, res) => {
+// ── 1. RÉCUPÉRER LES HÔTELS (Filtré Admin/Client) ─────────────
+exports.getHotels = async (req, res) => {
   try {
-    const hotelData = req.body;
-    if (req.file) hotelData.image = req.file.path;
-    hotelData.owner = req.user.id;
-
-    const nouvelHotel = new Hotel(hotelData);
-    await nouvelHotel.save();
-
-    // 🟢 AJOUTE CETTE LIGNE ICI POUR CRÉER LA NOTIF :
-    await Notification.create({
-      message: `Nouvel hôtel ajouté : ${nouvelHotel.nom}`,
-      owner: req.user.id // On lie la notif à l'utilisateur qui a créé l'hôtel
-    });
-
-    res.status(201).json(nouvelHotel);
+    let hotels;
+    // Si Admin : voit tout. Si Client : voit seulement ses hôtels.
+    if (req.user.role === 'admin') {
+      hotels = await Hotel.find().sort({ createdAt: -1 });
+    } else {
+      hotels = await Hotel.find({ owner: req.user.id }).sort({ createdAt: -1 });
+    }
+    res.json(hotels);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// ── 2. AJOUTER UN NOUVEL HÔTEL (AVEC IMAGE CLOUDINARY) ────────
+// ── 2. AJOUTER UN HÔTEL (Avec Image & Notif) ──────────────────
 exports.addHotel = async (req, res) => {
   try {
     const hotelData = req.body;
 
-    // 1. On récupère l'image si elle existe
     if (req.file) {
       hotelData.image = req.file.path; 
     }
 
-    // 2. IMPORTANT : On définit le propriétaire TOUT LE TEMPS
-    // (Cette ligne doit être en dehors du if de l'image)
+    // On lie l'hôtel à l'utilisateur connecté
     hotelData.owner = req.user.id;
 
     const nouvelHotel = new Hotel(hotelData);
     await nouvelHotel.save();
 
-    // 🟢 AJOUT : Créer une notification réelle
+    // Créer une notification réelle dans MongoDB
     await Notification.create({
       message: `Nouvel hôtel ajouté : ${nouvelHotel.nom}`,
       owner: req.user.id
@@ -48,10 +41,7 @@ exports.addHotel = async (req, res) => {
 
     res.status(201).json(nouvelHotel);
   } catch (error) {
-    res.status(400).json({ 
-        message: "Erreur lors de l'ajout", 
-        error: error.message 
-    });
+    res.status(400).json({ message: "Erreur lors de l'ajout", error: error.message });
   }
 };
 
@@ -65,24 +55,33 @@ exports.deleteHotel = async (req, res) => {
   }
 };
 
-
-// Ajoute ce code à la fin de ton fichier hotelController.js pour la route de statistiques :
-const User = require('../models/userModel'); // Assure-toi d'importer le modèle User
-
+// ── 4. RÉCUPÉRER LES STATISTIQUES ─────────────────────────────
 exports.getStats = async (req, res) => {
   try {
-    const nbHotels = await Hotel.countDocuments(); // Compte les hôtels
-    const nbUsers = await User.countDocuments();   // Compte les utilisateurs
+    const nbHotels = await Hotel.countDocuments();
+    const nbUsers = await User.countDocuments();
 
     res.json({
       hotels: nbHotels,
       users: nbUsers,
-      messages: 45,    // On peut laisser statique ou créer une collection plus tard
+      messages: 45,
       emails: 12,
       formulaires: 8,
       enquetes: 3
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// ── 5. RÉCUPÉRER LES NOTIFICATIONS ────────────────────────────
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifs = await Notification.find({ owner: req.user.id })
+                                     .sort({ date: -1 })
+                                     .limit(10);
+    res.json(notifs);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
