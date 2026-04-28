@@ -34,10 +34,12 @@ exports.addHotel = async (req, res) => {
     await nouvelHotel.save();
 
     // Créer une notification réelle dans MongoDB
-    await Notification.create({
-      message: `Nouvel hôtel ajouté : ${nouvelHotel.nom}`,
-      owner: req.user.id
-    });
+   // ... après avoir sauvegardé l'hôtel ...
+await Notification.create({
+  // 🟢 On ajoute le nom de l'utilisateur dans le message
+  message: `${req.user.nom} a ajouté l'hôtel : ${nouvelHotel.nom}`,
+  owner: req.user.id
+});
 
     res.status(201).json(nouvelHotel);
   } catch (error) {
@@ -77,7 +79,15 @@ exports.getStats = async (req, res) => {
 // ── 5. RÉCUPÉRER LES NOTIFICATIONS ────────────────────────────
 exports.getNotifications = async (req, res) => {
   try {
-    const notifs = await Notification.find({ owner: req.user.id })
+    let query = { owner: req.user.id }; // Par défaut : le client voit ses notifs
+
+    // 🟢 SI C'EST L'ADMIN : On enlève le filtre pour qu'il voit TOUTES les notifs du site
+    if (req.user.role === 'admin') {
+      query = {}; // L'admin voit tout
+    }
+
+    const notifs = await Notification.find(query)
+                                     .populate('owner', 'nom') // Pour savoir quel client a fait l'action
                                      .sort({ date: -1 })
                                      .limit(10);
     res.json(notifs);

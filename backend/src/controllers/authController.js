@@ -39,9 +39,17 @@ exports.login = async (req, res) => {
 // ── 3. RÉCUPÉRER LES NOTIFICATIONS ──
 exports.getNotifications = async (req, res) => {
   try {
-    const notifs = await Notification.find({ owner: req.user.id })
+    let query = { owner: req.user.id }; // Par défaut : le client voit ses notifs
+
+    // 🟢 SI C'EST L'ADMIN : On enlève le filtre pour qu'il voit TOUTES les notifs du site
+    if (req.user.role === 'admin') {
+      query = {}; // L'admin voit tout
+    }
+
+    const notifs = await Notification.find(query)
+                                     .populate('owner', 'nom') // Pour savoir quel client a fait l'action
                                      .sort({ date: -1 })
-                                     .limit(5);
+                                     .limit(10);
     res.json(notifs);
   } catch (error) {
     res.status(500).json({ message: "Erreur serveur" });
