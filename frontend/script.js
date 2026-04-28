@@ -186,25 +186,37 @@ async function chargerNotifications() {
     const notifMenu = document.getElementById('notifMenu');
     const badge = document.querySelector('#notifBtn span');
     if (!notifMenu) return;
+
     try {
-        const res = await fetch(`${API_AUTH}/notifications`, {
-            headers: { 'Authorization': `Bearer ${getToken()}` }
+        // 🟢 CORRECTION : On utilise API_HOTELS car la route est dans hotelRoutes.js
+        const response = await fetch(`${API_HOTELS}/notifications`, { 
+            headers: { 
+                'Authorization': `Bearer ${getToken()}` 
+            }
         });
-        const notifications = await res.json();
-        if (badge) {
-            badge.textContent = notifications.length;
-            badge.style.display = notifications.length > 0 ? 'flex' : 'none';
-        }
-        let html = '<div class="p-3 border-b font-bold text-xs text-gray-700">Notifications</div>';
-        if (notifications.length === 0) {
-            html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
+
+        const data = await response.json();
+
+        // 🟢 SÉCURITÉ : On vérifie si c'est bien une liste (Array)
+        if (response.ok && Array.isArray(data)) {
+            if (badge) {
+                badge.textContent = data.length;
+                badge.style.display = data.length > 0 ? 'flex' : 'none';
+            }
+
+            let html = '<div class="p-3 border-b font-bold text-xs text-gray-700">Notifications</div>';
+            if (data.length === 0) {
+                html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
+            } else {
+                data.forEach(n => {
+                    html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p><p class="text-[9px] text-gray-400 uppercase mt-1">À l'instant</p></div>`;
+                });
+            }
+            notifMenu.innerHTML = html;
         } else {
-            notifications.forEach(n => {
-                html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p><p class="text-[9px] text-gray-400 uppercase mt-1">À l'instant</p></div>`;
-            });
+            console.error("Erreur serveur ou accès refusé");
         }
-        notifMenu.innerHTML = html;
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Erreur réseau :", e); }
 }
 
 // 🟢 LA FONCTION QUI MANQUAIT (Pour ouvrir/fermer le menu cloche)
