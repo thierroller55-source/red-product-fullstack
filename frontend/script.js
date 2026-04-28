@@ -1,4 +1,4 @@
-// ============================================================
+c// ============================================================
 // 1. CONFIGURATION ET CONSTANTES
 // ============================================================
 const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
@@ -63,7 +63,7 @@ function animerChiffre(id, fin) {
 
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
-    const token = localStorage.getItem('token'); 
+    const token = getToken(); 
     const imgUrl = hotel.image || 'https://placehold.co/400x250?text=Pas+d+image';
 
     const card = document.createElement('div');
@@ -147,23 +147,18 @@ function seDeconnecter(event) {
 }
 
 // ============================================================
-// 4. UI HELPERS (MENUS, RECHERCHE, MODALS)
+// 4. UI HELPERS (MENUS, RECHERCHE, NOTIFICATIONS)
 // ============================================================
 
-// 🟢 NOUVEAU : Fonction pour ouvrir/fermer la recherche sur mobile
 function toggleSearchMobile() {
     const bar = document.getElementById('searchMobile');
     if (bar) bar.classList.toggle('hidden');
 }
 
-// 🟢 AMÉLIORÉ : Fonction de recherche pour Desktop ET Mobile
 function filterHotels() {
     const desktopInput = document.getElementById('searchInput')?.value || "";
     const mobileInput = document.querySelector('#searchMobile input')?.value || "";
-    
-    // On prend la valeur de l'une ou l'autre barre
     const query = (desktopInput || mobileInput).toLowerCase();
-    
     const cards = document.querySelectorAll('.hotel-card');
     cards.forEach(card => {
         const searchText = card.getAttribute('data-search') || "";
@@ -186,42 +181,51 @@ function previewPhoto(event) {
     reader.readAsDataURL(event.target.files[0]);
 }
 
+// 🟢 FONCTION DE CHARGEMENT DES NOTIFS
 async function chargerNotifications() {
     const notifMenu = document.getElementById('notifMenu');
-    const badge = document.querySelector('#notifBtn span'); // Le chiffre jaune
-
+    const badge = document.querySelector('#notifBtn span');
+    if (!notifMenu) return;
     try {
         const res = await fetch(`${API_AUTH}/notifications`, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         const notifications = await res.json();
-
-        // 1. Mettre à jour le chiffre sur la cloche
-        if (badge) badge.textContent = notifications.length;
-
-        // 2. Remplir le menu avec les vraies données
-        let html = '<div class="p-3 border-b font-bold text-xs">Notifications</div>';
-        
+        if (badge) {
+            badge.textContent = notifications.length;
+            badge.style.display = notifications.length > 0 ? 'flex' : 'none';
+        }
+        let html = '<div class="p-3 border-b font-bold text-xs text-gray-700">Notifications</div>';
         if (notifications.length === 0) {
-            html += '<p class="p-4 text-xs text-gray-400 text-center">Aucune notification</p>';
+            html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
         } else {
             notifications.forEach(n => {
-                html += `
-                <div class="p-3 border-b hover:bg-gray-50 cursor-pointer">
-                    <p class="text-[11px] text-gray-800 font-medium">${n.message}</p>
-                    <p class="text-[10px] text-gray-400">À l'instant</p>
-                </div>`;
+                html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p><p class="text-[9px] text-gray-400 uppercase mt-1">À l'instant</p></div>`;
             });
         }
-
-        html += '<div class="p-2 text-center"><button class="text-[10px] font-bold">Tout marquer comme lu</button></div>';
         notifMenu.innerHTML = html;
-
     } catch (e) { console.error(e); }
 }
 
+// 🟢 LA FONCTION QUI MANQUAIT (Pour ouvrir/fermer le menu cloche)
+function setupNotifications() {
+    const notifBtn = document.getElementById('notifBtn');
+    const notifMenu = document.getElementById('notifMenu');
+
+    if (notifBtn && notifMenu) {
+        notifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const estOuvert = notifMenu.classList.toggle('hidden');
+            // Si on vient d'ouvrir le menu, on charge les vraies notifs
+            if (!estOuvert) chargerNotifications();
+        });
+        // Fermer le menu si on clique n'importe où ailleurs sur l'écran
+        document.addEventListener('click', () => notifMenu.classList.add('hidden'));
+    }
+}
+
 // ============================================================
-// 5. INITIALISATION
+// 5. INITIALISATION (LE BLOC QUI LANCE TOUT)
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
@@ -242,5 +246,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const registrationForm = document.getElementById('registrationForm');
     if (registrationForm) registrationForm.addEventListener('submit', handleRegister);
 
+    const forgotForm = document.getElementById('forgotPasswordForm');
+    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
+
+    // ✅ CETTE LIGNE VA MAINTENANT FONCTIONNER !
     setupNotifications();
 });
