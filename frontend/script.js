@@ -271,10 +271,10 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 🟢 SI TOUT EST OK : On montre enfin la page
-    document.body.style.display = 'block'; 
+    // 🟢 CORRECTION ICI : On utilise 'flex' pour garder le centrage de Tailwind
+    document.body.style.display = 'flex'; 
 
-    // Reste de tes chargements (hotels, stats, etc.)
+    // Reste de tes chargements habituels...
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     // ...
