@@ -186,13 +186,38 @@ function previewPhoto(event) {
     reader.readAsDataURL(event.target.files[0]);
 }
 
-function setupNotifications() {
-    const btn = document.getElementById('notifBtn');
-    const menu = document.getElementById('notifMenu');
-    if (btn && menu) {
-        btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('hidden'); };
-        document.onclick = () => menu.classList.add('hidden');
-    }
+async function chargerNotifications() {
+    const notifMenu = document.getElementById('notifMenu');
+    const badge = document.querySelector('#notifBtn span'); // Le chiffre jaune
+
+    try {
+        const res = await fetch(`${API_AUTH}/notifications`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const notifications = await res.json();
+
+        // 1. Mettre à jour le chiffre sur la cloche
+        if (badge) badge.textContent = notifications.length;
+
+        // 2. Remplir le menu avec les vraies données
+        let html = '<div class="p-3 border-b font-bold text-xs">Notifications</div>';
+        
+        if (notifications.length === 0) {
+            html += '<p class="p-4 text-xs text-gray-400 text-center">Aucune notification</p>';
+        } else {
+            notifications.forEach(n => {
+                html += `
+                <div class="p-3 border-b hover:bg-gray-50 cursor-pointer">
+                    <p class="text-[11px] text-gray-800 font-medium">${n.message}</p>
+                    <p class="text-[10px] text-gray-400">À l'instant</p>
+                </div>`;
+            });
+        }
+
+        html += '<div class="p-2 text-center"><button class="text-[10px] font-bold">Tout marquer comme lu</button></div>';
+        notifMenu.innerHTML = html;
+
+    } catch (e) { console.error(e); }
 }
 
 // ============================================================

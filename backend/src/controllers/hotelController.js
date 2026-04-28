@@ -39,6 +39,12 @@ exports.addHotel = async (req, res) => {
     const nouvelHotel = new Hotel(hotelData);
     await nouvelHotel.save();
 
+    // 🟢 AJOUT : Créer une notification réelle
+    await Notification.create({
+      message: `Nouvel hôtel ajouté : ${nouvelHotel.nom}`,
+      owner: req.user.id
+    });
+
     res.status(201).json(nouvelHotel);
   } catch (error) {
     res.status(400).json({ 
