@@ -258,28 +258,50 @@ function setupNotifications() {
 // ============================================================
 // 5. INITIALISATION (LE BLOC QUI LANCE TOUT)
 // ============================================================
-window.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('token');
-    const path = window.location.pathname;
-    const isPublic = path.includes('connect') || path.includes('inscription');
+// ============================================================
+// 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
+// ============================================================
 
-    if (!token && !isPublic) {
+window.addEventListener('DOMContentLoaded', () => {
+    // 🛡️ LE GARDIEN : On récupère le badge (Token)
+    const token = localStorage.getItem('token');
+    const currentPath = window.location.pathname;
+    
+    // On définit les pages qui sont "publiques" (accessibles sans badge)
+    const isLoginPage = currentPath.includes('se%20connect%C3%A9.html') || currentPath.includes('connect');
+    const isRegisterPage = currentPath.includes('inscription.html');
+
+    // --- LOGIQUE DE PROTECTION ---
+    
+    // 1. Si l'utilisateur n'a PAS de badge et essaie d'aller sur une page privée (Dashboard ou Index)
+    if (!token && !isLoginPage && !isRegisterPage) {
+        // On le renvoie vers la connexion immédiatement
         window.location.replace('se connecté.html');
+        return; // On arrête tout le reste du code
+    }
+
+    // 2. Si l'utilisateur a DÉJÀ un badge et essaie d'aller sur la page de connexion
+    if (token && isLoginPage) {
+        // On le renvoie vers le dashboard (il est déjà connecté !)
+        window.location.replace('dashweb.html');
         return;
     }
 
+    // --- INITIALISATION DES PAGES SI TOUT EST OK ---
+    
+    // Charger les hôtels si on est sur la page de liste
     if (document.getElementById('hotelsGrid')) chargerHotels();
+    
+    // Charger les stats si on est sur le Dashboard
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
+    // Activer les formulaires
     const loginForm = document.getElementById('loginForm');
     if (loginForm) loginForm.addEventListener('submit', seConnecter);
      
     const registrationForm = document.getElementById('registrationForm');
     if (registrationForm) registrationForm.addEventListener('submit', handleRegister);
 
-    const forgotForm = document.getElementById('forgotPasswordForm');
-    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
-
-    // ✅ CETTE LIGNE VA MAINTENANT FONCTIONNER !
+    // Activer la cloche de notifications
     setupNotifications();
 });
