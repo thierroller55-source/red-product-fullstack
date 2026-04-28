@@ -181,6 +181,24 @@ function previewPhoto(event) {
     reader.readAsDataURL(event.target.files[0]);
 }
 
+// Fonction pour transformer une date en "Il y a X minutes/heures"
+function calculerTempsEcoule(dateNotif) {
+    const maintenant = new Date();
+    const date = new Date(dateNotif);
+    const secondes = Math.floor((maintenant - date) / 1000);
+
+    if (secondes < 60) return "À l'instant";
+    
+    const minutes = Math.floor(secondes / 60);
+    if (minutes < 60) return `Il y a ${minutes} min`;
+    
+    const heures = Math.floor(minutes / 60);
+    if (heures < 24) return `Il y a ${heures} h`;
+    
+    const jours = Math.floor(heures / 24);
+    return `Il y a ${jours} jours`;
+}
+
 // 🟢 FONCTION DE CHARGEMENT DES NOTIFS
 async function chargerNotifications() {
     const notifMenu = document.getElementById('notifMenu');
@@ -188,35 +206,36 @@ async function chargerNotifications() {
     if (!notifMenu) return;
 
     try {
-        // 🟢 CORRECTION : On utilise API_HOTELS car la route est dans hotelRoutes.js
         const response = await fetch(`${API_HOTELS}/notifications`, { 
-            headers: { 
-                'Authorization': `Bearer ${getToken()}` 
-            }
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-
         const data = await response.json();
 
-        // 🟢 SÉCURITÉ : On vérifie si c'est bien une liste (Array)
         if (response.ok && Array.isArray(data)) {
             if (badge) {
                 badge.textContent = data.length;
                 badge.style.display = data.length > 0 ? 'flex' : 'none';
             }
 
-            let html = '<div class="p-3 border-b font-bold text-xs text-gray-700">Notifications</div>';
+            let html = '<div class="p-3 border-b font-bold text-xs text-gray-700 uppercase tracking-wider">Notifications</div>';
+            
             if (data.length === 0) {
                 html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
             } else {
                 data.forEach(n => {
-                    html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p><p class="text-[9px] text-gray-400 uppercase mt-1">À l'instant</p></div>`;
+                    // 🟢 ON UTILISE LA FONCTION DE CALCUL ICI :
+                    const temps = calculerTempsEcoule(n.date); 
+                    
+                    html += `
+                    <div class="p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors">
+                        <p class="text-[11px] text-gray-800 font-medium">${n.message}</p>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase mt-1">${temps}</p>
+                    </div>`;
                 });
             }
             notifMenu.innerHTML = html;
-        } else {
-            console.error("Erreur serveur ou accès refusé");
         }
-    } catch (e) { console.error("Erreur réseau :", e); }
+    } catch (e) { console.error(e); }
 }
 
 // 🟢 LA FONCTION QUI MANQUAIT (Pour ouvrir/fermer le menu cloche)
