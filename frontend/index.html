@@ -9,10 +9,21 @@
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
+        body { 
             font-family: 'Inter', sans-serif;
+            display: none; /* La page est cachée par défaut */
         }
     </style>
+     <!-- CE CODE DOIT ÊTRE TOUT EN HAUT -->
+    <script>
+        // On vérifie le badge AVANT que la page ne se dessine
+        if (!localStorage.getItem('token')) {
+            window.location.replace('se connecté.html');
+        }
+    </script>
+    
+    <meta charset="UTF-8">
+    ... reste de ton head ...
 </head>
 
 <body class="bg-gray-100 h-screen flex overflow-hidden">
