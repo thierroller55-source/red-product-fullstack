@@ -1,24 +1,25 @@
 const Hotel = require('../models/hotelModel');
+const Notification = require('../models/notificationModel'); // 🟢 N'oublie pas l'import en haut !
 
 // ── 1. RÉCUPÉRER TOUS LES HÔTELS ─────────────────────────────
-exports.getHotels = async (req, res) => {
+exports.addHotel = async (req, res) => {
   try {
-    let hotels;
+    const hotelData = req.body;
+    if (req.file) hotelData.image = req.file.path;
+    hotelData.owner = req.user.id;
 
-    // 1. SI l'utilisateur connecté est ADMIN : il voit TOUT
-    if (req.user.role === 'admin') {
-      console.log("Accès Admin : Récupération de tous les hôtels.");
-      hotels = await Hotel.find().sort({ createdAt: -1 });
-    } 
-    // 2. SI l'utilisateur est CLIENT : il ne voit QUE SES hôtels
-    else {
-      console.log(`Accès Client (${req.user.id}) : Récupération des hôtels privés.`);
-      hotels = await Hotel.find({ owner: req.user.id }).sort({ createdAt: -1 });
-    }
+    const nouvelHotel = new Hotel(hotelData);
+    await nouvelHotel.save();
 
-    res.json(hotels);
+    // 🟢 AJOUTE CETTE LIGNE ICI POUR CRÉER LA NOTIF :
+    await Notification.create({
+      message: `Nouvel hôtel ajouté : ${nouvelHotel.nom}`,
+      owner: req.user.id // On lie la notif à l'utilisateur qui a créé l'hôtel
+    });
+
+    res.status(201).json(nouvelHotel);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
