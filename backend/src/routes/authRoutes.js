@@ -2,12 +2,15 @@ const express        = require('express');
 const router         = express.Router();
 const authController = require('../controllers/authController');
 
+// 🟢 CORRECTION DU CHEMIN (Vérifie bien le 's' à middlewares)
+const auth           = require('../middlewares/auth.middleware'); 
+
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-// Route pour récupérer les notifications de l'utilisateur connecté
-router.get('/notifications', auth, async (req, res) => {
-  const notifs = await Notification.find({ owner: req.user.id }).sort({ date: -1 }).limit(5);
-  res.json(notifs);
-});
+
+// Route pour récupérer les notifications (Une seule suffit)
+router.get('/notifications', auth, authController.getNotifications); 
+
+router.post('/forgot-password', authController.forgotPassword);
 
 module.exports = router;
