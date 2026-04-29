@@ -256,9 +256,6 @@ function setupNotifications() {
 }
 
 // ============================================================
-// 5. INITIALISATION (LE BLOC QUI LANCE TOUT)
-// ============================================================
-// ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {

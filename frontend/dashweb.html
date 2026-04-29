@@ -8,23 +8,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { 
-            font-family: 'DM Sans', sans-serif;
-            display: none; /* La page est cachée par défaut */
-    }
-        
-    </style>
-     <!-- CE CODE DOIT ÊTRE TOUT EN HAUT -->
+     <!-- LE GARDIEN PRIORITAIRE (Bien placé dans une balise script) -->
     <script>
-        // On vérifie le badge AVANT que la page ne se dessine
         if (!localStorage.getItem('token')) {
             window.location.replace('se connecté.html');
         }
     </script>
-    
-    <meta charset="UTF-8">
-    ... reste de ton head ...
+
+    <style>
+        /* On cache le body par défaut pour éviter le flash */
+        body { display: none; } 
+    </style>
 </head>
 
 <body class="bg-gray-100 h-screen flex overflow-hidden">
