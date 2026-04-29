@@ -261,20 +261,39 @@ function setupNotifications() {
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
+    
+    // On vérifie si on est sur une page publique (login ou inscription)
     const isPublic = path.includes('connect') || path.includes('inscription');
 
+    // 1. LE GARDIEN (SÉCURITÉ)
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return;
     }
 
-
-    // 🟢 CORRECTION ICI : On utilise 'flex' pour garder le centrage de Tailwind
+    // On affiche la page proprement
     document.body.style.display = 'flex'; 
 
-    // Reste de tes chargements habituels...
+    // 2. 🟢 GESTION DES FORMULAIRES (C'EST ÇA QUI MANQUAIT !)
+    
+    // On cherche le formulaire de connexion
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        console.log("Écouteur de connexion activé");
+        loginForm.addEventListener('submit', seConnecter);
+    }
+
+    // On cherche le formulaire d'inscription
+    const registrationForm = document.getElementById('registrationForm');
+    if (registrationForm) {
+        console.log("Écouteur d'inscription activé");
+        registrationForm.addEventListener('submit', handleRegister);
+    }
+
+    // 3. CHARGEMENTS HABITUELS
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
-     // 🟢 AJOUTE CETTE LIGNE ICI POUR ACTIVER LA CLOCHE :
+    
+    // Activer la cloche
     setupNotifications(); 
 });
