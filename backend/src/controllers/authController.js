@@ -68,39 +68,43 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "Message refusé : Email non reconnu." });
     }
 
-    // 1. Générer un Token unique et aléatoire
+    // 1. Générer le Token
     const token = crypto.randomBytes(20).toString('hex');
-
-    // 2. Enregistrer le token et l'expiration (valable 1h) dans MongoDB
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 3600000; 
     await user.save();
 
-    // 3. Créer le lien qui sera dans l'e-mail
-    // (Remplace par ton lien Vercel quand tu seras prêt)
-    const resetUrl = `http://127.0.0.1:5501/frontend/reset-password.html?token=${token}`;
+    // 2. LIEN VERCEL (Remplace par ton vrai lien Vercel)
+    const resetUrl = `https://red-product-fullstack-6bal.vercel.app/reset-password.html?token=${token}`;
 
-    // 4. Envoyer l'e-mail réel
-    await transporter.sendMail({
-      from: '"RED PRODUCT Support" <noreply@redproduct.com>',
-      to: user.email,
-      subject: "Réinitialisation de votre mot de passe",
-      html: `
-        <h3>Bonjour ${user.nom},</h3>
-        <p>Vous avez demandé à changer votre mot de passe.</p>
-        <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe (Lien valable 1 heure) :</p>
-        <a href="${resetUrl}" style="background: #2a2a2a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-          Changer mon mot de passe
-        </a>
-        <p>Si vous n'avez pas fait cette demande, ignorez cet e-mail.</p>
-      `
-    });
-
-    res.json({ success: true, message: "Accès passé : Un e-mail vous a été envoyé !" });
+    // 3. Envoyer l'e-mail (avec sécurité pour éviter l'erreur 500)
+    try {
+      await transporter.sendMail({
+        from: '"RED PRODUCT Support" <noreply@redproduct.com>',
+        to: user.email,
+        subject: "Réinitialisation de votre mot de passe",
+        html: `
+          <h3>Bonjour ${user.nom},</h3>
+          <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
+          <a href="${resetUrl}" style="background: #2a2a2a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Changer mon mot de passe
+          </a>
+        `
+      });
+      // Si le mail part :
+      res.json({ success: true, message: "Accès passé : Un e-mail vous a été envoyé !" });
+    } catch (mailError) {
+      // Si le mail échoue (ex: Mailtrap non configuré sur Render)
+      console.log("Erreur d'envoi d'e-mail, mais le token est créé :", token);
+      res.json({ 
+        success: true, 
+        message: "Accès passé ! (Note: L'envoi d'e-mail est en test, le lien est dans la console Render)",
+        tokenDebug: token // On l'envoie pour que tu puisses tester sans e-mail
+      });
+    }
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Erreur lors de l'envoi de l'e-mail." });
+    res.status(500).json({ message: "Erreur serveur." });
   }
 };
 
