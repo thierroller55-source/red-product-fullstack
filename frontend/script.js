@@ -268,8 +268,12 @@ async function handleForgotPassword(event) {
         const data = await response.json();
 
         if (response.ok) {
-            alert("✅ " + data.message);
-            // On peut rediriger vers le login ou rester là
+            // 🟢 SI LE SERVEUR A ENVOYÉ UN TOKEN DE TEST (car le mail a échoué)
+            if (data.tokenDebug) {
+                alert("COPIE CE CODE SECRET : " + data.tokenDebug);
+            } else {
+                alert("✅ " + data.message);
+            }
         } else {
             alert("❌ " + data.message);
         }
