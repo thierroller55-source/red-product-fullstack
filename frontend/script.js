@@ -253,10 +253,36 @@ function setupNotifications() {
     }
 }
 
-async function handleResetPassword(event) {
-    event.preventDefault();
+// ── 3.3 GESTION MOT DE PASSE OUBLIÉ (ENVOI EMAIL) ──────────
+async function handleForgotPassword(event) {
+    if(event) event.preventDefault();
+    const email = document.getElementById('email').value;
 
-    // 1. On récupère le Token depuis l'URL (le truc après ?token=...)
+    try {
+        const response = await fetch(`${API_AUTH}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ " + data.message);
+            // On peut rediriger vers le login ou rester là
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (error) {
+        alert("Le serveur ne répond pas.");
+    }
+}
+
+// ── 3.4 GESTION RÉINITIALISATION (NOUVEAU MOT DE PASSE) ─────
+async function handleResetPassword(event) {
+    if(event) event.preventDefault();
+
+    // On récupère le token depuis l'adresse URL (?token=...)
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
@@ -278,17 +304,15 @@ async function handleResetPassword(event) {
         const data = await response.json();
 
         if (response.ok) {
-            alert("✅ Mot de passe changé ! Connectez-vous avec votre nouveau secret.");
+            alert("✅ Mot de passe modifié ! Connectez-vous.");
             window.location.href = 'se connecté.html';
         } else {
             alert("❌ " + data.message);
         }
-    } catch (e) { alert("Erreur serveur."); }
+    } catch (e) {
+        alert("Erreur technique.");
+    }
 }
-
-// N'oublie pas de l'ajouter dans ton DOMContentLoaded à la fin du fichier :
-const resetForm = document.getElementById('resetPasswordForm');
-if (resetForm) resetForm.addEventListener('submit', handleResetPassword);
 
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
