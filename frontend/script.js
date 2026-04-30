@@ -297,8 +297,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
     
-    // On vérifie si on est sur une page publique (login ou inscription)
-    const isPublic = path.includes('connect') || path.includes('inscription');
+    // 🟢 ON AJOUTE 'oublie' ICI POUR AUTORISER LA PAGE
+    const isPublic = path.includes('connect') || 
+                     path.includes('inscription') || 
+                     path.includes('oublie'); 
 
     // 1. LE GARDIEN (SÉCURITÉ)
     if (!token && !isPublic) {
@@ -309,26 +311,76 @@ window.addEventListener('DOMContentLoaded', () => {
     // On affiche la page proprement
     document.body.style.display = 'flex'; 
 
-    // 2. 🟢 GESTION DES FORMULAIRES (C'EST ÇA QUI MANQUAIT !)
+    // 2. GESTION DES FORMULAIRES
     
-    // On cherche le formulaire de connexion
+    // Formulaire de connexion
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        console.log("Écouteur de connexion activé");
         loginForm.addEventListener('submit', seConnecter);
     }
 
-    // On cherche le formulaire d'inscription
+    // Formulaire d'inscription
     const registrationForm = document.getElementById('registrationForm');
     if (registrationForm) {
-        console.log("Écouteur d'inscription activé");
         registrationForm.addEventListener('submit', handleRegister);
+    }
+
+    // 🟢 AJOUT : Formulaire de mot de passe oublié
+    const forgotForm = document.getElementById('forgotPasswordForm');
+    if (forgotForm) {
+        console.log("Écouteur de mot de passe oublié activé");
+        forgotForm.addEventListener('submit', handleForgotPassword);
+    }
+
+    // 🟢 AJOUT : Formulaire de réinitialisation (le lien dans l'email)
+    const resetForm = document.getElementById('resetPasswordForm');
+    if (resetForm) {
+        resetForm.addEventListener('submit', handleResetPassword);
     }
 
     // 3. CHARGEMENTS HABITUELS
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
-    // Activer la cloche
     setupNotifications(); 
 });
+
+// window.addEventListener('DOMContentLoaded', () => {
+//     const token = localStorage.getItem('token');
+//     const path = window.location.pathname;
+    
+//     // On vérifie si on est sur une page publique (login ou inscription)
+//     const isPublic = path.includes('connect') || path.includes('inscription');
+
+//     // 1. LE GARDIEN (SÉCURITÉ)
+//     if (!token && !isPublic) {
+//         window.location.replace('se connecté.html');
+//         return;
+//     }
+
+//     // On affiche la page proprement
+//     document.body.style.display = 'flex'; 
+
+//     // 2. 🟢 GESTION DES FORMULAIRES (C'EST ÇA QUI MANQUAIT !)
+    
+//     // On cherche le formulaire de connexion
+//     const loginForm = document.getElementById('loginForm');
+//     if (loginForm) {
+//         console.log("Écouteur de connexion activé");
+//         loginForm.addEventListener('submit', seConnecter);
+//     }
+
+//     // On cherche le formulaire d'inscription
+//     const registrationForm = document.getElementById('registrationForm');
+//     if (registrationForm) {
+//         console.log("Écouteur d'inscription activé");
+//         registrationForm.addEventListener('submit', handleRegister);
+//     }
+
+//     // 3. CHARGEMENTS HABITUELS
+//     if (document.getElementById('hotelsGrid')) chargerHotels();
+//     if (document.getElementById('statHotels')) chargerStatsDashboard();
+    
+//     // Activer la cloche
+//     setupNotifications(); 
+// });
