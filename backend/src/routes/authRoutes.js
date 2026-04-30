@@ -10,7 +10,8 @@ router.post('/login', authController.login);
 
 // Route pour récupérer les notifications (Une seule suffit)
 router.get('/notifications', auth, authController.getNotifications); 
-
 router.post('/forgot-password', authController.forgotPassword);
+// Ajoute cette ligne dans authRoutes.js
+router.post('/reset-password/:token', authController.resetPassword);
 
 module.exports = router;

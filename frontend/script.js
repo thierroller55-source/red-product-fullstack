@@ -145,11 +145,9 @@ function seDeconnecter(event) {
     localStorage.removeItem('token'); 
     window.location.replace('se connecté.html'); 
 }
-
 // ============================================================
 // 4. UI HELPERS (MENUS, RECHERCHE, NOTIFICATIONS)
 // ============================================================
-
 function toggleSearchMobile() {
     const bar = document.getElementById('searchMobile');
     if (bar) bar.classList.toggle('hidden');
@@ -254,6 +252,43 @@ function setupNotifications() {
         document.addEventListener('click', () => notifMenu.classList.add('hidden'));
     }
 }
+
+async function handleResetPassword(event) {
+    event.preventDefault();
+
+    // 1. On récupère le Token depuis l'URL (le truc après ?token=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    const password = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+
+    if (password !== confirm) {
+        alert("Les mots de passe ne sont pas identiques.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_AUTH}/reset-password/${token}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ Mot de passe changé ! Connectez-vous avec votre nouveau secret.");
+            window.location.href = 'se connecté.html';
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (e) { alert("Erreur serveur."); }
+}
+
+// N'oublie pas de l'ajouter dans ton DOMContentLoaded à la fin du fichier :
+const resetForm = document.getElementById('resetPasswordForm');
+if (resetForm) resetForm.addEventListener('submit', handleResetPassword);
 
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)

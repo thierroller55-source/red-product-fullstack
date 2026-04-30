@@ -103,3 +103,34 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({ message: "Erreur lors de l'envoi de l'e-mail." });
   }
 };
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    // 1. Chercher l'utilisateur qui possède ce Token et vérifier s'il n'est pas expiré
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() } // $gt veut dire "plus grand que l'heure actuelle"
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Le lien est invalide ou a expiré." });
+    }
+
+    // 2. Crypter le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 3. Mettre à jour l'utilisateur et effacer les jetons de secours
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ success: true, message: "Félicitations ! Votre mot de passe a été modifié." });
+
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la réinitialisation." });
+  }
+};
