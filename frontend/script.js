@@ -323,33 +323,46 @@ async function handleResetPassword(event) {
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
-    const path = window.location.pathname;
-    const decodedPath = decodeURIComponent(path);
+    const decodedPath = decodeURIComponent(window.location.pathname);
     
-    // 🟢 ON AJOUTE 'reset-password' ICI POUR AUTORISER L'ACCÈS
+    // 1. LISTE BLANCHE (Pages autorisées SANS badge)
+    // On ajoute 'reset-password' pour que cette page ne disparaisse plus
     const isPublic = decodedPath.includes('se connecté') || 
                      decodedPath.includes('inscription') || 
                      decodedPath.includes('mode pass oublie') ||
-                     decodedPath.includes('reset-password'); // <-- AJOUTE CETTE LIGNE
+                     decodedPath.includes('reset-password'); // 🟢 AJOUTÉ ICI
 
-    // 🛡️ LE GARDIEN
+    // 2. LE GARDIEN (Empêche l'accès aux pages privées)
     if (!token && !isPublic) {
-        window.location.replace('se connecté.html');
+        // Si pas de badge, on dégage vers la connexion
+        window.location.replace('se connecté.html'); 
         return;
     }
 
-    // On affiche la page proprement
-    document.body.style.display = 'flex'; 
-
-    // ... (garde tes autres lignes loginForm, registrationForm, etc.) ...
-
-    // 🟢 VÉRIFIE QUE CETTE LIGNE EST BIEN LÀ :
-    const resetForm = document.getElementById('resetPasswordForm');
-    if (resetForm) {
-        console.log("Écouteur de réinitialisation activé");
-        resetForm.addEventListener('submit', handleResetPassword);
+    // 3. SÉCURITÉ RETOUR (Si déjà connecté, on interdit de revenir au login)
+    if (token && (decodedPath.includes('se connecté') || decodedPath.includes('inscription'))) {
+        window.location.replace('dashweb.html');
+        return;
     }
 
+    // 4. AFFICHAGE (On montre la page seulement si le badge est validé)
+    document.body.style.display = 'flex'; 
+
+    // --- INITIALISATION DES FORMULAIRES ---
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) loginForm.addEventListener('submit', seConnecter);
+     
+    const registrationForm = document.getElementById('registrationForm');
+    if (registrationForm) registrationForm.addEventListener('submit', handleRegister);
+
+    const forgotForm = document.getElementById('forgotPasswordForm');
+    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
+
+    const resetForm = document.getElementById('resetPasswordForm');
+    if (resetForm) resetForm.addEventListener('submit', handleResetPassword);
+
+    // --- CHARGEMENTS ---
     if (document.getElementById('hotelsGrid')) chargerHotels();
+    if (document.getElementById('statHotels')) chargerStatsDashboard();
     setupNotifications();
 });
