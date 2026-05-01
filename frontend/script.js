@@ -321,48 +321,43 @@ async function handleResetPassword(event) {
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
+
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
-    const decodedPath = decodeURIComponent(window.location.pathname);
+    const path = window.location.pathname;
     
-    // 1. LISTE BLANCHE (Pages autorisées SANS badge)
-    // On ajoute 'reset-password' pour que cette page ne disparaisse plus
-    const isPublic = decodedPath.includes('se connecté') || 
-                     decodedPath.includes('inscription') || 
-                     decodedPath.includes('mode pass oublie') ||
-                     decodedPath.includes('reset-password'); // 🟢 AJOUTÉ ICI
+    // On vérifie si on est sur une page publique (login ou inscription)
+    const isPublic = path.includes('connect') || path.includes('inscription');
 
-    // 2. LE GARDIEN (Empêche l'accès aux pages privées)
+    // 1. LE GARDIEN (SÉCURITÉ)
     if (!token && !isPublic) {
-        // Si pas de badge, on dégage vers la connexion
-        window.location.replace('se connecté.html'); 
+        window.location.replace('se connecté.html');
         return;
     }
 
-    // 3. SÉCURITÉ RETOUR (Si déjà connecté, on interdit de revenir au login)
-    if (token && (decodedPath.includes('se connecté') || decodedPath.includes('inscription'))) {
-        window.location.replace('dashweb.html');
-        return;
-    }
-
-    // 4. AFFICHAGE (On montre la page seulement si le badge est validé)
+    // On affiche la page proprement
     document.body.style.display = 'flex'; 
 
-    // --- INITIALISATION DES FORMULAIRES ---
+    // 2. 🟢 GESTION DES FORMULAIRES (C'EST ÇA QUI MANQUAIT !)
+    
+    // On cherche le formulaire de connexion
     const loginForm = document.getElementById('loginForm');
-    if (loginForm) loginForm.addEventListener('submit', seConnecter);
-     
+    if (loginForm) {
+        console.log("Écouteur de connexion activé");
+        loginForm.addEventListener('submit', seConnecter);
+    }
+
+    // On cherche le formulaire d'inscription
     const registrationForm = document.getElementById('registrationForm');
-    if (registrationForm) registrationForm.addEventListener('submit', handleRegister);
+    if (registrationForm) {
+        console.log("Écouteur d'inscription activé");
+        registrationForm.addEventListener('submit', handleRegister);
+    }
 
-    const forgotForm = document.getElementById('forgotPasswordForm');
-    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
-
-    const resetForm = document.getElementById('resetPasswordForm');
-    if (resetForm) resetForm.addEventListener('submit', handleResetPassword);
-
-    // --- CHARGEMENTS ---
+    // 3. CHARGEMENTS HABITUELS
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
-    setupNotifications();
+    
+    // Activer la cloche
+    setupNotifications(); 
 });
