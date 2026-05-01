@@ -324,42 +324,32 @@ async function handleResetPassword(event) {
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     const path = window.location.pathname;
-
-    // 🟢 ON AJOUTE TA PAGE ICI 
-    // On utilise decodeURIComponent car ton fichier a des espaces dans son nom (%20)
     const decodedPath = decodeURIComponent(path);
     
+    // 🟢 ON AJOUTE 'reset-password' ICI POUR AUTORISER L'ACCÈS
     const isPublic = decodedPath.includes('se connecté') || 
                      decodedPath.includes('inscription') || 
-                     decodedPath.includes('mode pass oublie'); // <-- AJOUTE CETTE LIGNE
+                     decodedPath.includes('mode pass oublie') ||
+                     decodedPath.includes('reset-password'); // <-- AJOUTE CETTE LIGNE
 
-    // 🛡️ LE GARDIEN DE SÉCURITÉ
+    // 🛡️ LE GARDIEN
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return;
     }
 
-    // On affiche le contenu
+    // On affiche la page proprement
     document.body.style.display = 'flex'; 
 
-    // Initialisation des formulaires
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) loginForm.addEventListener('submit', seConnecter);
-     
-    const registrationForm = document.getElementById('registrationForm');
-    if (registrationForm) registrationForm.addEventListener('submit', handleRegister);
+    // ... (garde tes autres lignes loginForm, registrationForm, etc.) ...
 
-    const forgotForm = document.getElementById('forgotPasswordForm');
-    if (forgotForm) {
-        console.log("Écouteur oublié activé");
-        forgotForm.addEventListener('submit', handleForgotPassword);
+    // 🟢 VÉRIFIE QUE CETTE LIGNE EST BIEN LÀ :
+    const resetForm = document.getElementById('resetPasswordForm');
+    if (resetForm) {
+        console.log("Écouteur de réinitialisation activé");
+        resetForm.addEventListener('submit', handleResetPassword);
     }
 
-    const resetForm = document.getElementById('resetPasswordForm');
-    if (resetForm) resetForm.addEventListener('submit', handleResetPassword);
-
-    // Reste des chargements
     if (document.getElementById('hotelsGrid')) chargerHotels();
-    if (document.getElementById('statHotels')) chargerStatsDashboard();
     setupNotifications();
 });
