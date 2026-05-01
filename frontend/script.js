@@ -317,45 +317,81 @@ async function handleResetPassword(event) {
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
+// On crée une variable pour savoir si on a déjà chargé les données
+let dejaCharge = false;
+
 window.addEventListener('DOMContentLoaded', () => {
+    if (dejaCharge) return; // Si déjà fait, on arrête tout
+    dejaCharge = true;
+
     const token = localStorage.getItem('token');
-    
-    // 🟢 TRÈS IMPORTANT : On décode l'adresse pour lire les accents et espaces
-    const currentPath = decodeURIComponent(window.location.pathname);
+    const path = decodeURIComponent(window.location.pathname);
+    const isPublic = path.includes('connect') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
 
-    // Définition des pages (avec tes noms exacts)
-    const isLoginPage    = currentPath.includes('se connecté.html');
-    const isRegisterPage = currentPath.includes('inscription.html');
-    const isForgotPage   = currentPath.includes('mode pass oublie.html');
-    const isResetPage    = currentPath.includes('reset-password.html');
-    
-    const isPublicPage = isLoginPage || isRegisterPage || isForgotPage || isResetPage;
-
-    // 1. PROTECTION SÉCURITÉ
-    if (!token && !isPublicPage) {
+    // 1. Sécurité rapide
+    if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return;
     }
 
-    // 2. AFFICHAGE (On force Flex pour ton design au milieu)
+    // 2. On montre la page
     document.body.style.display = 'flex'; 
 
-    // 3. ACTIVATION DES FORMULAIRES
-    if (isLoginPage) {
-        document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
-    }
-    if (isRegisterPage) {
-        document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-    }
-    if (isForgotPage) {
-        document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-    }
-    if (isResetPage) {
-        document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+    // 3. On ne lance les fonctions lourDES que si on est sur la bonne page
+    const grid = document.getElementById('hotelsGrid');
+    if (grid) {
+        console.log("Chargement léger des hôtels...");
+        chargerHotels(); 
     }
 
-    // 4. CHARGEMENTS
-    if (document.getElementById('hotelsGrid')) chargerHotels();
-    if (document.getElementById('statHotels')) chargerStatsDashboard();
+    const stats = document.getElementById('statHotels');
+    if (stats) {
+        console.log("Chargement léger du Dashboard...");
+        chargerStatsDashboard();
+    }
+
     setupNotifications();
 });
+
+// window.addEventListener('DOMContentLoaded', () => {
+//     const token = localStorage.getItem('token');
+    
+//     // 🟢 TRÈS IMPORTANT : On décode l'adresse pour lire les accents et espaces
+//     const currentPath = decodeURIComponent(window.location.pathname);
+
+//     // Définition des pages (avec tes noms exacts)
+//     const isLoginPage    = currentPath.includes('se connecté.html');
+//     const isRegisterPage = currentPath.includes('inscription.html');
+//     const isForgotPage   = currentPath.includes('mode pass oublie.html');
+//     const isResetPage    = currentPath.includes('reset-password.html');
+    
+//     const isPublicPage = isLoginPage || isRegisterPage || isForgotPage || isResetPage;
+
+//     // 1. PROTECTION SÉCURITÉ
+//     if (!token && !isPublicPage) {
+//         window.location.replace('se connecté.html');
+//         return;
+//     }
+
+//     // 2. AFFICHAGE (On force Flex pour ton design au milieu)
+//     document.body.style.display = 'flex'; 
+
+//     // 3. ACTIVATION DES FORMULAIRES
+//     if (isLoginPage) {
+//         document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
+//     }
+//     if (isRegisterPage) {
+//         document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
+//     }
+//     if (isForgotPage) {
+//         document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
+//     }
+//     if (isResetPage) {
+//         document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+//     }
+
+//     // 4. CHARGEMENTS
+//     if (document.getElementById('hotelsGrid')) chargerHotels();
+//     if (document.getElementById('statHotels')) chargerStatsDashboard();
+//     setupNotifications();
+// });
