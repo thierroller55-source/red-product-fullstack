@@ -268,12 +268,8 @@ async function handleForgotPassword(event) {
         const data = await response.json();
 
         if (response.ok) {
-            // 🟢 SI LE SERVEUR A ENVOYÉ UN TOKEN DE TEST (car le mail a échoué)
-            if (data.tokenDebug) {
-                alert("COPIE CE CODE SECRET : " + data.tokenDebug);
-            } else {
-                alert("✅ " + data.message);
-            }
+            alert("✅ " + data.message);
+            // On peut rediriger vers le login ou rester là
         } else {
             alert("❌ " + data.message);
         }
@@ -321,6 +317,57 @@ async function handleResetPassword(event) {
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
+// window.addEventListener('DOMContentLoaded', () => {
+//     const token = localStorage.getItem('token');
+//     const path = window.location.pathname;
+    
+//     // 🟢 ON AJOUTE 'oublie' ICI POUR AUTORISER LA PAGE
+//     const isPublic = path.includes('connect') || 
+//                      path.includes('inscription') || 
+//                      path.includes('oublie'); 
+
+//     // 1. LE GARDIEN (SÉCURITÉ)
+//     if (!token && !isPublic) {
+//         window.location.replace('se connecté.html');
+//         return;
+//     }
+
+//     // On affiche la page proprement
+//     document.body.style.display = 'flex'; 
+
+//     // 2. GESTION DES FORMULAIRES
+    
+//     // Formulaire de connexion
+//     const loginForm = document.getElementById('loginForm');
+//     if (loginForm) {
+//         loginForm.addEventListener('submit', seConnecter);
+//     }
+
+//     // Formulaire d'inscription
+//     const registrationForm = document.getElementById('registrationForm');
+//     if (registrationForm) {
+//         registrationForm.addEventListener('submit', handleRegister);
+//     }
+
+//     // 🟢 AJOUT : Formulaire de mot de passe oublié
+//     const forgotForm = document.getElementById('forgotPasswordForm');
+//     if (forgotForm) {
+//         console.log("Écouteur de mot de passe oublié activé");
+//         forgotForm.addEventListener('submit', handleForgotPassword);
+//     }
+
+//     // 🟢 AJOUT : Formulaire de réinitialisation (le lien dans l'email)
+//     const resetForm = document.getElementById('resetPasswordForm');
+//     if (resetForm) {
+//         resetForm.addEventListener('submit', handleResetPassword);
+//     }
+
+//     // 3. CHARGEMENTS HABITUELS
+//     if (document.getElementById('hotelsGrid')) chargerHotels();
+//     if (document.getElementById('statHotels')) chargerStatsDashboard();
+    
+//     setupNotifications(); 
+// });
 
 window.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
