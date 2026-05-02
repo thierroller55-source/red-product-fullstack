@@ -375,31 +375,57 @@ async function handleResetPassword(event) {
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE)
 // ============================================================
 
-window.addEventListener('pageshow', () => {
+// ============================================================
+// 5. INITIALISATION (SÉCURITÉ MAXIMALE)
+// ============================================================
+
+window.addEventListener('pageshow', (event) => {
     const token = localStorage.getItem('token');
     const path  = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
+    
+    // 1. Liste des pages autorisées sans badge
+    const isPublic = path.includes('se connecté') || 
+                     path.includes('inscription') || 
+                     path.includes('mode pass oublie') || 
+                     path.includes('reset-password');
 
-    // 1. Si pas de badge sur page privée -> Éjection immédiate
+    // 2. LE GARDIEN DE SÉCURITÉ
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
-        return;
+        return; 
     }
 
-    // 2. 🟢 LA CORRECTION : Si on a un badge, on montre la page TOUT DE SUITE
-    // On n'attend pas le serveur pour "allumer la lumière"
-    if (token || isPublic) {
-        document.body.style.setProperty('display', 'flex', 'important');
-        activerToutesLesFonctionnalites();
-    }
-
-    // 3. On vérifie quand même le badge en arrière-plan pour la sécurité
+    // 3. 🟢 VÉRIFICATION RÉELLE AVEC LE SERVEUR
+    // Si on a un badge sur une page privée, on demande au serveur s'il est encore bon
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
             if (!valide) {
-                alert("Session expirée");
-                seDeconnecter();
+                // Si le serveur dit NON (ex: token expiré ou après logout + retour arrière)
+                seDeconnecter(); 
+                return;
             }
+            // Si c'est bon, on montre la page et on lance les fonctions
+            finaliserAffichage();
         });
+    } else {
+        // Si on est sur une page publique (Login/Reg), on affiche directement
+        finaliserAffichage();
     }
 });
+
+// Petite fonction pour éviter de répéter le code d'affichage
+function finaliserAffichage() {
+    document.body.style.display = 'flex'; 
+
+    // Activation des formulaires (Login, Inscription, Oubli, Reset)
+    document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
+    document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
+    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+
+    // Chargements des données réelles
+    if (document.getElementById('hotelsGrid')) chargerHotels();
+    if (document.getElementById('statHotels')) chargerStatsDashboard();
+    
+    setupNotifications();
+}
