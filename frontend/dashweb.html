@@ -9,8 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- 1. BLOQUER LE FLASH : On cache tout immédiatement -->
     <style>
-        body { display: none !important; }
-    </style>
+    /* 1. On cache le body pour la sécurité (déjà fait) */
+    body { display: none; } 
+
+    /* 2. 🟢 LA COULEUR MANQUANTE : Ajoute ce bloc ici */
+    .sidebar-bg { 
+        background-color: #454d55; 
+        background-image: radial-gradient(circle at center, #4d565f 0%, #343a40 100%); 
+    }
+</style>
     <!-- BLOQUER LE CACHE (Anti-Retour arrière) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">

@@ -201,60 +201,63 @@ function setupNotifications() {
 }
 
 // ============================================================
-// 5. INITIALISATION (SÉCURITÉ ET AFFICHAGE RAPIDE)
+// 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
 // ============================================================
 
-window.addEventListener('pageshow', () => {
+// On utilise 'pageshow' pour que le code se relance même au clic sur "Retour"
+window.addEventListener('pageshow', (event) => {
     const token = getToken();
     const path  = decodeURIComponent(window.location.pathname);
     
     // Liste des pages autorisées sans badge
-    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
+    const isPublic = path.includes('se connecté') || 
+                     path.includes('inscription') || 
+                     path.includes('mode pass oublie') || 
+                     path.includes('reset');
 
-    // 🛡️ 1. SÉCURITÉ : Si on tente d'entrer sans badge sur une page privée
+    // 🛡️ 1. LE GARDIEN IMMÉDIAT (Éjection si pas de badge)
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
-        return;
+        return; 
     }
 
-    // 🛡️ 2. SÉCURITÉ : Si on est déjà connecté, on n'a rien à faire sur le Login
-    if (token && isPublic && !path.includes('reset')) {
-        window.location.replace('dashweb.html');
-        return;
-    }
-
-    // 🟢 3. AFFICHAGE : On allume la lumière TOUT DE SUITE pour éviter l'écran blanc
-    document.body.style.setProperty('display', 'flex', 'important');
-    finaliserAffichage();
-
-    // 🛡️ 4. VÉRIFICATION EN ARRIÈRE-PLAN (Seulement pour les pages privées)
+    // 🛡️ 2. VÉRIFICATION RÉELLE AVEC LE SERVEUR
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
             if (!valide) {
-                alert("Session expirée, veuillez vous reconnecter.");
-                seDeconnecter();
+                // Si le serveur dit NON (ex: après une déconnexion) -> Éjection
+                seDeconnecter(); 
+                return;
             }
+            // Si c'est bon, on affiche la page et on active les boutons
+            finaliserInitialisation();
         });
+    } else {
+        // Page publique (Login/Reg) -> on affiche directement
+        finaliserInitialisation();
     }
 });
 
-function finaliserAffichage() {
-    console.log("Affichage de la page activé.");
-    
-    // Branchement des formulaires
+// ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
+function finaliserInitialisation() {
+    // 1. On "allume la lumière" (Affiche le body en flex)
+    document.body.style.setProperty('display', 'flex', 'important');
+
+    // 2. On branche les formulaires (C'EST ÇA QUI RÉPARE TES BOUTONS !)
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
 
-    // Chargement des données (si les éléments existent sur la page)
+    // 3. On charge les données selon la page
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
-    // Affichage du nom
+    // 4. On affiche le nom de l'utilisateur
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
 
+    // 5. On active la cloche et autres menus
     setupNotifications();
 }
