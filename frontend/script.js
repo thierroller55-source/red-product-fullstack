@@ -1,4 +1,4 @@
-c// ============================================================
+// ============================================================
 // 1. CONFIGURATION ET CONSTANTES
 // ============================================================
 const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
@@ -69,7 +69,7 @@ function ajouterCarteHotel(hotel) {
 }
 
 // ============================================================
-// 3. AUTHENTIFICATION
+// 3. AUTHENTIFICATION (LOGIN, REGISTER, LOGOUT)
 // ============================================================
 
 async function seConnecter(event) {
@@ -82,7 +82,6 @@ async function seConnecter(event) {
         if (res.ok) { 
             localStorage.setItem('token', data.token); 
             if(data.user) localStorage.setItem('userName', data.user.nom);
-            // On utilise window.location.replace pour la sécurité
             window.location.replace('dashweb.html'); 
         } else { alert("❌ " + data.message); }
     } catch (e) { alert("Erreur serveur"); }
@@ -93,9 +92,18 @@ async function handleRegister(event) {
     const nom = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const res = await fetch(`${API_AUTH}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, email, password }) });
-    if (res.ok) { alert("✅ Inscription réussie !"); window.location.replace('se connecté.html'); }
-    else { alert("❌ Erreur"); }
+    try {
+        const res = await fetch(`${API_AUTH}/register`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ nom, email, password }) 
+        });
+        if (res.ok) { 
+            alert("✅ Inscription réussie ! Connectez-vous."); 
+            // 🟢 REDIRECTION VERS LA CONNEXION ICI
+            window.location.replace('se connecté.html'); 
+        } else { alert("❌ Erreur lors de l'inscription"); }
+    } catch (e) { alert("Erreur serveur"); }
 }
 
 async function verifierToken(token) {
@@ -105,77 +113,71 @@ async function verifierToken(token) {
     } catch (e) { return false; }
 }
 
-function seDeconnecter(event) {
-    if (event) event.preventDefault();
+function seDeconnecter() {
     localStorage.clear();
     window.location.replace('se connecté.html');
 }
 
 // ============================================================
-// 4. UI HELPERS (DÉJÀ FAIT)
+// 4. UI HELPERS (MENUS, RECHERCHE, MODALS, OEIL)
 // ============================================================
+
+function togglePassword() {
+    const input = document.getElementById('password');
+    if (input) input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
 function setupNotifications() {
     const btn = document.getElementById('notifBtn');
     const menu = document.getElementById('notifMenu');
     if (btn && menu) {
-        btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('hidden'); chargerNotifications(); };
+        btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('hidden'); };
         document.addEventListener('click', () => menu.classList.add('hidden'));
     }
 }
 
+function filterHotels() {
+    const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
+    document.querySelectorAll('.hotel-card').forEach(card => {
+        card.classList.toggle('hidden', !card.getAttribute('data-search').includes(query));
+    });
+}
+
+function openModal() { document.getElementById('modal')?.classList.remove('hidden'); }
+function closeModal() { document.getElementById('modal')?.classList.add('hidden'); }
+
 // ============================================================
-// 5. INITIALISATION (LE GARDIEN DE SÉCURITÉ FINAL)
+// 5. INITIALISATION (LE GARDIEN)
 // ============================================================
 
-window.addEventListener('pageshow', (event) => {
+window.addEventListener('pageshow', () => {
     const token = getToken();
     const path  = decodeURIComponent(window.location.pathname);
-    
-    // Pages autorisées sans badge
-    const isPublic = path.includes('se connecté') || 
-                     path.includes('inscription') || 
-                     path.includes('mode pass oublie') || 
-                     path.includes('reset');
+    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('mode pass oublie') || path.includes('reset');
 
-    // 🛡️ GARDIEN 1 : Accès sans token sur page privée -> Éjection
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return;
     }
 
-    // 🛡️ GARDIEN 2 : Vérification du badge avec le serveur
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
-            if (!valide) {
-                seDeconnecter();
-                return;
-            }
-            // Badge validé -> On montre la page
-            document.body.style.display = 'flex'; 
-            finaliserInitialisation();
+            if (!valide) { seDeconnecter(); return; }
+            finaliserAffichage();
         });
     } else {
-        // Page publique -> on affiche et on active les boutons (ex: Login)
-        document.body.style.display = 'flex'; 
-        finaliserInitialisation();
+        finaliserAffichage();
     }
 });
 
-function finaliserInitialisation() {
-    // Branchement des formulaires
+function finaliserAffichage() {
+    document.body.style.display = 'flex'; 
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
-
-    // Chargement des données
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
-    
-    // Nom utilisateur
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
-
     setupNotifications();
 }
