@@ -35,92 +35,31 @@ async function chargerHotels() {
 }
 
 async function chargerStatsDashboard() {
-    const ids = ["statHotels", "statUsers", "statMessages", "statEmails", "statFormulaires", "statEnquetes"];
-
-    // 1. On met tout le monde en mode "Chargement..."
-    ids.forEach(id => animerChiffre(id));
-
     try {
         const response = await fetch(`${API_HOTELS}/stats/count`, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        
-        if (!response.ok) throw new Error("Erreur stats");
-        
+        if (!response.ok) return;
         const stats = await response.json();
-
-        // 2. Les données sont là, on lance l'animation réelle
         animerChiffre("statHotels", stats.hotels);
         animerChiffre("statUsers", stats.users);
         animerChiffre("statMessages", stats.messages);
         animerChiffre("statEmails", stats.emails);
         animerChiffre("statFormulaires", stats.formulaires);
         animerChiffre("statEnquetes", stats.enquetes);
-
-    } catch (e) {
-        console.error(e);
-        // En cas d'erreur, on affiche 0 ou un petit message
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.textContent = "0";
-        });
-    }
+    } catch (e) { console.error(e); }
 }
-
-// async function chargerStatsDashboard() {
-//     try {
-//         const response = await fetch(`${API_HOTELS}/stats/count`, {
-//             headers: { 'Authorization': `Bearer ${getToken()}` }
-//         });
-//         if (!response.ok) return;
-//         const stats = await response.json();
-//         animerChiffre("statHotels", stats.hotels);
-//         animerChiffre("statUsers", stats.users);
-//         animerChiffre("statMessages", stats.messages);
-//         animerChiffre("statEmails", stats.emails);
-//         animerChiffre("statFormulaires", stats.formulaires);
-//         animerChiffre("statEnquetes", stats.enquetes);
-//     } catch (e) { console.error(e); }
-// }
 
 function animerChiffre(id, fin) {
     const el = document.getElementById(id);
     if (!el) return;
-
-    // 🟢 ÉTAPE 1 : Si la donnée n'est pas encore là, on affiche un état de chargement
-    if (fin === undefined || fin === null) {
-        el.innerHTML = '<span class="text-gray-300 animate-pulse text-sm">Chargement...</span>';
-        return;
-    }
-
-    // 🟢 ÉTAPE 2 : Animation fluide du chiffre
     let debut = 0;
-    const duree = 1000; // L'animation dure exactement 1 seconde
-    const fps = 30;    // 30 images par seconde (très fluide mais léger)
-    const totalFrames = (duree / 1000) * fps;
-    const increment = fin / totalFrames;
-
     const timer = setInterval(() => {
-        debut += increment;
-        if (debut >= fin) {
-            el.textContent = fin; // On affiche le chiffre exact à la fin
-            clearInterval(timer);
-        } else {
-            el.textContent = Math.floor(debut);
-        }
-    }, 1000 / fps);
+        debut += fin / 60;
+        if (debut >= fin) { el.textContent = fin; clearInterval(timer); }
+        else { el.textContent = Math.floor(debut); }
+    }, 16);
 }
-
-// function animerChiffre(id, fin) {
-//     const el = document.getElementById(id);
-//     if (!el) return;
-//     let debut = 0;
-//     const timer = setInterval(() => {
-//         debut += fin / 60;
-//         if (debut >= fin) { el.textContent = fin; clearInterval(timer); }
-//         else { el.textContent = Math.floor(debut); }
-//     }, 16);
-// }
 
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
