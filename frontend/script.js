@@ -240,24 +240,23 @@ window.addEventListener('pageshow', (event) => {
 
 // ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
 function finaliserInitialisation() {
-    // 1. On "allume la lumière" (Affiche le body en flex)
+    // 🟢 ON AFFICHE ENFIN LA PAGE (Seulement quand la sécurité a validé)
     document.body.style.setProperty('display', 'flex', 'important');
 
-    // 2. On branche les formulaires (C'EST ÇA QUI RÉPARE TES BOUTONS !)
+    // Branchement des formulaires
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
 
-    // 3. On charge les données selon la page
+    // Chargement des données réelles
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
-    // 4. On affiche le nom de l'utilisateur
+    // Affichage du nom
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
 
-    // 5. On active la cloche et autres menus
     setupNotifications();
 }

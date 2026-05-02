@@ -1,34 +1,31 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+   <!-- 1. 🟢 BLOQUER LE FLASH : On rend la page invisible immédiatement -->
+    <style>
+        body { display: none !important; }
+    </style>
+
+    <!-- 2. 🟢 LE GARDIEN ULTRA-RAPIDE -->
+    <script>
+        (function() {
+            const token = localStorage.getItem('token');
+            const path = decodeURIComponent(window.location.pathname);
+            
+            // Si on n'a pas de badge sur une page privée, on éjecte IMMEDIATEMENT
+            if (!token && !path.includes('se connecté') && !path.includes('inscription')) {
+                window.location.replace('se connecté.html');
+            }
+        })();
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des hôtels</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 1. BLOQUER LE FLASH : On cache tout immédiatement -->
-    <style>
-    /* 1. On cache le body pour la sécurité (déjà fait) */
-    body { display: none; } 
-
-    /* 2. 🟢 LA COULEUR MANQUANTE : Ajoute ce bloc ici */
-    .sidebar-bg { 
-        background-color: #454d55; 
-        background-image: radial-gradient(circle at center, #4d565f 0%, #343a40 100%); 
-    }
-</style>
-    <!-- BLOQUER LE CACHE (Anti-Retour arrière) -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
-    <!-- 2. LE GARDIEN ULTRA-RAPIDE -->
-     <script>
-        if (!localStorage.getItem('token')) {
-            window.location.replace('se connecté.html');
-        }
-    </script>
+    
 </head>
 
 <body class="bg-gray-100 h-screen flex overflow-hidden">
@@ -36,36 +33,59 @@
     <!-- ✅ Overlay mobile -->
     <div id="sidebarOverlay" onclick="fermerMenu()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
-    <!-- ===== SIDEBAR ===== -->
-    <aside id="sidebar" class="w-56 sidebar-bg text-white flex flex-col justify-between py-6 px-4 fixed top-0 left-0 h-full z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+     <!-- ✅ SIDEBAR — cachée sur mobile, visible sur lg -->
+    <aside id="sidebar" class="w-48 bg-gray-700 flex flex-col justify-between py-6 px-4
+               fixed top-0 left-0 h-full z-40
+               transform -translate-x-full lg:translate-x-0
+               transition-transform duration-300 ease-in-out">
+
+        <!-- Logo -->
         <div>
-            <div class="flex items-center gap-2 mb-8 px-2">
-                <div class="w-6 h-6 bg-white rounded flex items-center justify-center">
-                    <svg class="w-4 h-4 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z" /></svg>
+            <div class="flex items-center gap-2 mb-6 px-1">
+                <div class="w-6 h-6 bg-white rounded flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5 text-black" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z" />
+                    </svg>
                 </div>
-                <span class="font-bold text-sm tracking-widest uppercase">Red Product</span>
+                <span class="text-white font-bold text-sm tracking-wide">RED PRODUCT</span>
             </div>
 
-            <p class="text-gray-400 text-[10px] uppercase tracking-widest mb-4 px-2 font-bold">Principal</p>
-            <nav class="flex flex-col gap-2">
-                <a href="dashweb.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/10 transition text-xs">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" stroke-width="2"/></svg>
+            <p class="text-gray-400 text-[10px] uppercase tracking-widest mb-2 px-1">Principal</p>
+
+            <nav class="flex flex-col gap-1">
+                <!-- Dashboard actif -->
+                <a href="dashweb.html"
+                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#555555] text-white text-xs font-medium">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2" />
+                    </svg>
                     Dashboard
                 </a>
-                <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white text-gray-800 font-bold text-xs shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3" stroke-width="2"/></svg>
+
+                <a href="index.html"
+                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-300 hover:bg-[#555555] hover:text-white text-xs transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3" />
+                    </svg>
                     Liste des hôtels
                 </a>
             </nav>
         </div>
 
-        <!-- Profil Utilisateur Dynamique -->
-        <div class="flex items-center gap-3 px-2 pt-4 border-t border-gray-600">
-            <img src="image/propriete.png" class="w-9 h-9 rounded-full object-cover border border-gray-500">
-            <div class="overflow-hidden">
-                <p id="userNameDisplay" class="text-[11px] font-bold truncate">Utilisateur</p>
-                <p class="text-green-400 text-[9px] flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> en ligne
+        <!-- Profil -->
+        <div class="flex items-center gap-2.5 px-1">
+            <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-gray-500">
+                <img src="image/propriete.png" alt="avatar" class="w-full h-full object-cover" />
+            </div>
+            <div>
+                <p class="text-white text-xs font-semibold leading-tight">Mame Thierno Diouf</p>
+                <p class="text-green-400 text-[10px] flex items-center gap-1 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
+                    en ligne
                 </p>
             </div>
         </div>
