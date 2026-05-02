@@ -9,17 +9,11 @@
 
     <!-- 2. LE GARDIEN ULTRA-RAPIDE -->
     <script>
-        (function() {
-            const token = localStorage.getItem('token');
-            const path = decodeURIComponent(window.location.pathname);
-            const isPublic = path.includes('se connecté') || path.includes('inscription');
-
-            // Si pas de badge sur une page privée, on éjecte AVANT que l'écran ne s'allume
-            if (!token && !isPublic) {
-                window.location.replace('se connecté.html');
-            }
-        })();
-    </script>
+    // Gardien simple pour index.html
+    if (!localStorage.getItem('token')) {
+        window.location.replace('se connecté.html');
+    }
+</script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
