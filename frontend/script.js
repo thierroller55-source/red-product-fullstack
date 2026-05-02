@@ -383,19 +383,14 @@ window.addEventListener('pageshow', (event) => {
 
 // ── FONCTION D'ACTIVATION ────────────────────────────────
 function activerToutesLesFonctionnalites() {
-    document.body.style.display = 'flex';
+    // 🟢 ON ALLUME LA LUMIÈRE ICI (On utilise 'flex' pour ton design)
+    document.body.style.setProperty('display', 'flex', 'important');
 
-    // On branche les formulaires (login, inscription, etc.)
+    // Le reste de tes chargements...
     const loginForm = document.getElementById('loginForm');
     if (loginForm) loginForm.addEventListener('submit', seConnecter);
-     
-    const regForm = document.getElementById('registrationForm');
-    if (regForm) regForm.addEventListener('submit', handleRegister);
-
-    // Chargements des données
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
-
     setupNotifications();
 }
 
