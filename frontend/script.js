@@ -147,16 +147,19 @@ async function verifierToken(token) {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        // Si le serveur répond 401 (Vrai refus), c'est fini
-        if (response.status === 401) return false;
 
-        // Si le serveur répond 200, c'est bon
-        return response.ok; 
+        // 🟢 ON N'ÉJECTE QUE SI LE SERVEUR RÉPOND "401 UNAUTHORIZED" (Vrai refus)
+        if (response.status === 401) {
+            return false;
+        }
+
+        // Pour tous les autres cas (200 OK ou Serveur en train de dormir)
+        // On renvoie "true" pour laisser l'utilisateur tranquille
+        return true; 
+
     } catch (e) {
-        // 🟢 S'il y a une erreur réseau (serveur qui dort), 
-        // on ne l'éjecte pas tout de suite, on dit que c'est "vrai" pour l'instant
-        console.warn("Le serveur est lent à répondre...");
+        // Si le réseau plante ou que Render dort, on ne bloque pas l'utilisateur
+        console.warn("Le serveur est lent, attente du réveil...");
         return true; 
     }
 }
