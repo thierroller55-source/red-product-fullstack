@@ -140,11 +140,30 @@ async function handleRegister(event) {
     else { alert("❌ Erreur"); }
 }
 
+// function seDeconnecter(event) {
+//     if (event) event.preventDefault();
+//     localStorage.removeItem('token'); 
+//     window.location.replace('se connecté.html'); 
+// }
+
 function seDeconnecter(event) {
     if (event) event.preventDefault();
-    localStorage.removeItem('token'); 
-    window.location.replace('se connecté.html'); 
+    
+    // Supprime le token
+    localStorage.removeItem('token');
+    
+    // ✅ Vide aussi le cache de navigation
+    // Empêche le bouton "retour" d'afficher les pages protégées
+    if (window.history && window.history.pushState) {
+        window.history.pushState(null, null, 'se connecté.html');
+        window.onpopstate = function() {
+            window.history.pushState(null, null, 'se connecté.html');
+        };
+    }
+    
+    window.location.replace('se connecté.html');
 }
+
 // ============================================================
 // 4. UI HELPERS (MENUS, RECHERCHE, NOTIFICATIONS)
 // ============================================================
@@ -317,38 +336,99 @@ async function handleResetPassword(event) {
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
-// On crée une variable pour savoir si on a déjà chargé les données
-let dejaCharge = false;
+
+// // On crée une variable pour savoir si on a déjà chargé les données
+// let dejaCharge = false;
+
+// window.addEventListener('DOMContentLoaded', () => {
+//     if (dejaCharge) return; // Si déjà fait, on arrête tout
+//     dejaCharge = true;
+
+//     const token = localStorage.getItem('token');
+//     const path = decodeURIComponent(window.location.pathname);
+//     const isPublic = path.includes('connect') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
+
+//     // 1. Sécurité rapide
+//     if (!token && !isPublic) {
+//         window.location.replace('se connecté.html');
+//         return;
+//     }
+
+//     // 2. On montre la page
+//     document.body.style.display = 'flex'; 
+
+//     // 3. On ne lance les fonctions lourDES que si on est sur la bonne page
+//     const grid = document.getElementById('hotelsGrid');
+//     if (grid) {
+//         console.log("Chargement léger des hôtels...");
+//         chargerHotels(); 
+//     }
+
+//     const stats = document.getElementById('statHotels');
+//     if (stats) {
+//         console.log("Chargement léger du Dashboard...");
+//         chargerStatsDashboard();
+//     }
+
+//     setupNotifications();
+// });
 
 window.addEventListener('DOMContentLoaded', () => {
-    if (dejaCharge) return; // Si déjà fait, on arrête tout
+    if (dejaCharge) return;
     dejaCharge = true;
 
     const token = localStorage.getItem('token');
-    const path = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('connect') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
+    const path  = decodeURIComponent(window.location.pathname);
+    const isPublic = path.includes('connect') || 
+                     path.includes('inscription') || 
+                     path.includes('oublie') || 
+                     path.includes('reset');
 
-    // 1. Sécurité rapide
+    // ✅ CORRECTION — Vérification AVANT d'afficher quoi que ce soit
     if (!token && !isPublic) {
+        // Redirige immédiatement sans afficher la page
         window.location.replace('se connecté.html');
-        return;
+        return; // STOP — on n'exécute rien d'autre
     }
 
-    // 2. On montre la page
-    document.body.style.display = 'flex'; 
-
-    // 3. On ne lance les fonctions lourDES que si on est sur la bonne page
-    const grid = document.getElementById('hotelsGrid');
-    if (grid) {
-        console.log("Chargement léger des hôtels...");
-        chargerHotels(); 
+    // ✅ NOUVEAU — Vérifier que le token est encore valide côté serveur
+    if (token && !isPublic) {
+        verifierToken(token).then(valide => {
+            if (!valide) {
+                localStorage.removeItem('token');
+                window.location.replace('se connecté.html');
+                return;
+            }
+            // Token valide → on affiche la page
+            afficherPage();
+        });
+    } else {
+        // Page publique → on affiche directement
+        afficherPage();
     }
+});
 
+// ── Vérifie le token côté serveur ──────────────────────────
+async function verifierToken(token) {
+    try {
+        const res = await fetch(`${API_AUTH}/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.ok; // true si valide, false si expiré/invalide
+    } catch (e) {
+        return false; // Erreur réseau → considère comme invalide
+    }
+}
+
+// ── Affiche la page et charge les données ──────────────────
+function afficherPage() {
+    document.body.style.display = 'flex';
+
+    const grid  = document.getElementById('hotelsGrid');
     const stats = document.getElementById('statHotels');
-    if (stats) {
-        console.log("Chargement léger du Dashboard...");
-        chargerStatsDashboard();
-    }
+
+    if (grid)  chargerHotels();
+    if (stats) chargerStatsDashboard();
 
     setupNotifications();
-});
+}

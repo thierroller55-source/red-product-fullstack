@@ -13,5 +13,9 @@ router.get('/notifications', auth, authController.getNotifications);
 router.post('/forgot-password', authController.forgotPassword);
 // Ajoute cette ligne dans authRoutes.js
 router.post('/reset-password/:token', authController.resetPassword);
+// Route pour vérifier si le token est encore valide
+router.get('/verify', auth, (req, res) => {
+    res.json({ valide: true, user: req.user });
+});
 
 module.exports = router;
