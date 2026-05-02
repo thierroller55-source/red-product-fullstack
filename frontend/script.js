@@ -69,22 +69,57 @@ function ajouterCarteHotel(hotel) {
 }
 
 // ============================================================
-// 3. AUTHENTIFICATION (LOGIN, REGISTER, LOGOUT)
+// 3. AUTHENTIFICATION
 // ============================================================
 
 async function seConnecter(event) {
     event.preventDefault();
+    
+    // Récupération des éléments du bouton pour l'animation
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+
+    // Activer le chargement
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        spinner?.classList.remove('hidden');
+        if (btnText) btnText.textContent = "Connexion...";
+    }
+
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+
     try {
-        const res = await fetch(`${API_AUTH}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        const res = await fetch(`${API_AUTH}/login`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ email, password }) 
+        });
+        
         const data = await res.json();
+        
         if (res.ok) { 
             localStorage.setItem('token', data.token); 
             if(data.user) localStorage.setItem('userName', data.user.nom);
             window.location.replace('dashweb.html'); 
-        } else { alert("❌ " + data.message); }
-    } catch (e) { alert("Erreur serveur"); }
+        } else { 
+            alert("❌ " + data.message); 
+            // Remettre le bouton à zéro
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                spinner?.classList.add('hidden');
+                if (btnText) btnText.textContent = "Se connecter";
+            }
+        }
+    } catch (e) { 
+        alert("Erreur serveur : vérifiez votre connexion."); 
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            spinner?.classList.add('hidden');
+            if (btnText) btnText.textContent = "Se connecter";
+        }
+    }
 }
 
 async function handleRegister(event) {
@@ -99,8 +134,7 @@ async function handleRegister(event) {
             body: JSON.stringify({ nom, email, password }) 
         });
         if (res.ok) { 
-            alert("✅ Inscription réussie ! Connectez-vous."); 
-            // 🟢 REDIRECTION VERS LA CONNEXION ICI
+            alert("✅ Inscription réussie !"); 
             window.location.replace('se connecté.html'); 
         } else { alert("❌ Erreur lors de l'inscription"); }
     } catch (e) { alert("Erreur serveur"); }
@@ -119,12 +153,19 @@ function seDeconnecter() {
 }
 
 // ============================================================
-// 4. UI HELPERS (MENUS, RECHERCHE, MODALS, OEIL)
+// 4. UI HELPERS
 // ============================================================
 
 function togglePassword() {
     const input = document.getElementById('password');
     if (input) input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+function filterHotels() {
+    const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
+    document.querySelectorAll('.hotel-card').forEach(card => {
+        card.classList.toggle('hidden', !card.getAttribute('data-search').includes(query));
+    });
 }
 
 function setupNotifications() {
@@ -136,24 +177,14 @@ function setupNotifications() {
     }
 }
 
-function filterHotels() {
-    const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
-    document.querySelectorAll('.hotel-card').forEach(card => {
-        card.classList.toggle('hidden', !card.getAttribute('data-search').includes(query));
-    });
-}
-
-function openModal() { document.getElementById('modal')?.classList.remove('hidden'); }
-function closeModal() { document.getElementById('modal')?.classList.add('hidden'); }
-
 // ============================================================
-// 5. INITIALISATION (LE GARDIEN)
+// 5. INITIALISATION
 // ============================================================
 
 window.addEventListener('pageshow', () => {
     const token = getToken();
     const path  = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('mode pass oublie') || path.includes('reset');
+    const isPublic = path.includes('se connecté') || path.includes('inscription');
 
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
@@ -174,10 +205,13 @@ function finaliserAffichage() {
     document.body.style.display = 'flex'; 
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
+    
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
+    
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
+    
     setupNotifications();
 }
