@@ -315,19 +315,38 @@ async function handleForgotPassword(event) {
 async function handleResetPassword(event) {
     if(event) event.preventDefault();
 
-    // On récupère le token depuis l'adresse URL (?token=...)
+    // 1. Récupération du Token dans l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
-    const password = document.getElementById('newPassword').value;
-    const confirm = document.getElementById('confirmPassword').value;
+    // Sécurité : Si le lien est ouvert sans token
+    if (!token) {
+        alert("❌ Erreur : Ce lien de sécurité est incomplet ou corrompu.");
+        return;
+    }
+
+    // 2. Récupération des éléments (Sécurisée avec ?)
+    const passInput = document.getElementById('newPassword');
+    const confInput = document.getElementById('confirmPassword');
+
+    if (!passInput || !confInput) return; // On s'arrête si on n'est pas sur la bonne page
+
+    const password = passInput.value;
+    const confirm  = confInput.value;
+
+    // 3. Validation locale
+    if (password.length < 4) {
+        alert("Le mot de passe doit faire au moins 4 caractères.");
+        return;
+    }
 
     if (password !== confirm) {
-        alert("Les mots de passe ne sont pas identiques.");
+        alert("Les deux mots de passe ne sont pas identiques.");
         return;
     }
 
     try {
+        // 4. Appel au serveur (Backend Render)
         const response = await fetch(`${API_AUTH}/reset-password/${token}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -337,13 +356,15 @@ async function handleResetPassword(event) {
         const data = await response.json();
 
         if (response.ok) {
-            alert("✅ Mot de passe modifié ! Connectez-vous.");
-            window.location.href = 'se connecté.html';
+            alert("✅ Succès : Votre mot de passe a été mis à jour !");
+            // On utilise replace pour effacer cette page de l'historique
+            window.location.replace('se connecté.html');
         } else {
-            alert("❌ " + data.message);
+            alert("❌ Erreur : " + data.message);
         }
     } catch (e) {
-        alert("Erreur technique.");
+        console.error(e);
+        alert("Le serveur de réinitialisation ne répond pas.");
     }
 }
 
@@ -351,119 +372,91 @@ async function handleResetPassword(event) {
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE)
 // ============================================================
 
-// On utilise 'pageshow' au lieu de 'DOMContentLoaded'
 window.addEventListener('pageshow', (event) => {
     const token = localStorage.getItem('token');
     const path  = decodeURIComponent(window.location.pathname);
     
+    // 1. Liste des pages autorisées sans badge
     const isPublic = path.includes('se connecté') || 
                      path.includes('inscription') || 
                      path.includes('mode pass oublie') || 
-                     path.includes('reset');
+                     path.includes('reset-password'); // 🟢 On autorise la page reset
 
-    // 🛡️ SI RETOUR ARRIÈRE SANS TOKEN -> ÉJECTION IMMÉDIATE
+    // 2. LE GARDIEN (SÉCURITÉ)
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return; 
     }
 
-    // Si on vient du cache (bouton retour), on force la vérification
-    if (token && !isPublic) {
-        verifierToken(token).then(valide => {
-            if (!valide) {
-                seDeconnecter(); // On détruit tout et on éjecte
-                return;
-            }
-            activerToutesLesFonctionnalites();
-        });
-    } else {
-        activerToutesLesFonctionnalites();
+    // 3. ACTIVATION DES FORMULAIRES (Selon la page où on se trouve)
+    
+    // Page Login
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) loginForm.addEventListener('submit', seConnecter);
+     
+    // Page Inscription
+    const regForm = document.getElementById('registrationForm');
+    if (regForm) regForm.addEventListener('submit', handleRegister);
+
+    // Page Mot de passe oublié (Email)
+    const forgotForm = document.getElementById('forgotPasswordForm');
+    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
+
+    // 🟢 NOUVEAU : Page Réinitialisation (Nouveau mot de passe)
+    const resetForm = document.getElementById('resetPasswordForm');
+    if (resetForm) {
+        console.log("Système de réinitialisation activé");
+        resetForm.addEventListener('submit', handleResetPassword);
+    }
+
+    // 4. CHARGEMENTS ET AFFICHAGE
+    if (token || isPublic) {
+        document.body.style.display = 'flex'; // On montre le site
+        if (document.getElementById('hotelsGrid')) chargerHotels();
+        if (document.getElementById('statHotels')) chargerStatsDashboard();
+        setupNotifications();
     }
 });
 
-// ── FONCTION D'ACTIVATION ────────────────────────────────
-function activerToutesLesFonctionnalites() {
-    // 🟢 ON ALLUME LA LUMIÈRE ICI (On utilise 'flex' pour ton design)
-    document.body.style.setProperty('display', 'flex', 'important');
-
-    // Le reste de tes chargements...
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) loginForm.addEventListener('submit', seConnecter);
-    if (document.getElementById('hotelsGrid')) chargerHotels();
-    if (document.getElementById('statHotels')) chargerStatsDashboard();
-    setupNotifications();
-}
-
-// // ============================================================
-// // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
-// // ============================================================
-
-// let dejaCharge = false;
-
-// window.addEventListener('DOMContentLoaded', () => {
-//     if (dejaCharge) return;
-//     dejaCharge = true;
-
+// // On utilise 'pageshow' au lieu de 'DOMContentLoaded'
+// window.addEventListener('pageshow', (event) => {
 //     const token = localStorage.getItem('token');
 //     const path  = decodeURIComponent(window.location.pathname);
     
-//     // Liste des pages autorisées sans badge
 //     const isPublic = path.includes('se connecté') || 
 //                      path.includes('inscription') || 
 //                      path.includes('mode pass oublie') || 
-//                      path.includes('reset');
+//                      path.includes('reset-password'); // Doit être là !
 
-//     // 🛡️ LE GARDIEN : Si pas de badge sur une page privée -> Éjection
+//     // 🛡️ SI RETOUR ARRIÈRE SANS TOKEN -> ÉJECTION IMMÉDIATE
 //     if (!token && !isPublic) {
 //         window.location.replace('se connecté.html');
 //         return; 
 //     }
 
-//     // 🛡️ VÉRIFICATION DU BADGE (Si on est sur une page privée)
+//     // Si on vient du cache (bouton retour), on force la vérification
 //     if (token && !isPublic) {
 //         verifierToken(token).then(valide => {
 //             if (!valide) {
-//                 localStorage.removeItem('token');
-//                 window.location.replace('se connecté.html');
+//                 seDeconnecter(); // On détruit tout et on éjecte
 //                 return;
 //             }
 //             activerToutesLesFonctionnalites();
 //         });
 //     } else {
-//         // Si on est sur une page publique, on active quand même les fonctions (pour le Login/Reg)
 //         activerToutesLesFonctionnalites();
 //     }
 // });
 
-// // ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
+// // ── FONCTION D'ACTIVATION ────────────────────────────────
 // function activerToutesLesFonctionnalites() {
-//     // 1. On montre la page (Design Flex)
-//     document.body.style.display = 'flex';
+//     // 🟢 ON ALLUME LA LUMIÈRE ICI (On utilise 'flex' pour ton design)
+//     document.body.style.setProperty('display', 'flex', 'important');
 
-//     // 2. On branche les formulaires (C'est ce qui manquait !)
-//     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
-//     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-//     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-//     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
-
-//     // 3. On charge les données selon la page
+//     // Le reste de tes chargements...
+//     const loginForm = document.getElementById('loginForm');
+//     if (loginForm) loginForm.addEventListener('submit', seConnecter);
 //     if (document.getElementById('hotelsGrid')) chargerHotels();
 //     if (document.getElementById('statHotels')) chargerStatsDashboard();
-
-//     // 4. On active la cloche
 //     setupNotifications();
-// }
-
-// // ── VÉRIFIER LE TOKEN (Appel léger au serveur) ──────────
-// async function verifierToken(token) {
-//     try {
-//         // On utilise la route des hôtels (ou n'importe quelle route protégée)
-//         // pour voir si le serveur accepte notre badge
-//         const res = await fetch(`${API_HOTELS}`, {
-//             headers: { 'Authorization': `Bearer ${token}` }
-//         });
-//         return res.ok; 
-//     } catch (e) {
-//         return false; 
-//     }
 // }

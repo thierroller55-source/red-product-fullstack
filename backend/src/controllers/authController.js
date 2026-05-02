@@ -74,8 +74,8 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; 
     await user.save();
 
-    // 2. LIEN VERCEL (Remplace par ton vrai lien Vercel)
-    const resetUrl = `https://red-product-fullstack-6bal.vercel.app/reset-password.html?token=${token}`;
+   // ATTENTION : Si ton fichier s'appelle 'reset-password.html', n'oublie pas le .html !
+const resetUrl = `https://red-product-fullstack-6bal.vercel.app/reset-password.html?token=${token}`;
 
     // 3. Envoyer l'e-mail (avec sécurité pour éviter l'erreur 500)
     try {
