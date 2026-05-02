@@ -178,40 +178,60 @@ function setupNotifications() {
 }
 
 // ============================================================
-// 5. INITIALISATION
+// 5. INITIALISATION (SÉCURITÉ ET AFFICHAGE RAPIDE)
 // ============================================================
 
 window.addEventListener('pageshow', () => {
     const token = getToken();
     const path  = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('se connecté') || path.includes('inscription');
+    
+    // Liste des pages autorisées sans badge
+    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
 
+    // 🛡️ 1. SÉCURITÉ : Si on tente d'entrer sans badge sur une page privée
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return;
     }
 
+    // 🛡️ 2. SÉCURITÉ : Si on est déjà connecté, on n'a rien à faire sur le Login
+    if (token && isPublic && !path.includes('reset')) {
+        window.location.replace('dashweb.html');
+        return;
+    }
+
+    // 🟢 3. AFFICHAGE : On allume la lumière TOUT DE SUITE pour éviter l'écran blanc
+    document.body.style.setProperty('display', 'flex', 'important');
+    finaliserAffichage();
+
+    // 🛡️ 4. VÉRIFICATION EN ARRIÈRE-PLAN (Seulement pour les pages privées)
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
-            if (!valide) { seDeconnecter(); return; }
-            finaliserAffichage();
+            if (!valide) {
+                alert("Session expirée, veuillez vous reconnecter.");
+                seDeconnecter();
+            }
         });
-    } else {
-        finaliserAffichage();
     }
 });
 
 function finaliserAffichage() {
-    document.body.style.display = 'flex'; 
+    console.log("Affichage de la page activé.");
+    
+    // Branchement des formulaires
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-    
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
+    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+
+    // Chargement des données (si les éléments existent sur la page)
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
+    // Affichage du nom
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
-    
+
     setupNotifications();
 }
