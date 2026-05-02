@@ -161,9 +161,15 @@ async function verifierToken(token) {
     }
 }
 
-function seDeconnecter() {
-    localStorage.clear();
-    window.location.replace('se connecté.html');
+function seDeconnecter(event) {
+    if (event) event.preventDefault();
+    
+    // 1. On vide TOUTE la mémoire (Token et Nom)
+    localStorage.clear(); 
+    
+    // 2. On remplace la page actuelle dans l'historique par le login
+    // Cela empêche physiquement de faire "Retour" vers le Dashboard
+    window.location.replace('se connecté.html'); 
 }
 
 // ============================================================
