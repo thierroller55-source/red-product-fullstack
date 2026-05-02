@@ -318,66 +318,25 @@ async function handleResetPassword(event) {
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
 // On crée une variable pour savoir si on a déjà chargé les données
-let dejaCharge = false;
+// let dejaCharge = false;
 
-window.addEventListener('DOMContentLoaded', () => {
-    if (dejaCharge) return; // Si déjà fait, on arrête tout
-    dejaCharge = true;
+// window.addEventListener('DOMContentLoaded', () => {
+//     if (dejaCharge) return; // Si déjà fait, on arrête tout
+//     dejaCharge = true;
 
-    const token = localStorage.getItem('token');
-    const path = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('connect') ||
-                     path.includes('inscription') ||
-                     path.includes('oublie') ||
-                     path.includes('reset');
+//     const token = localStorage.getItem('token');
+//     const path = decodeURIComponent(window.location.pathname);
+//     const isPublic = path.includes('connect') ||
+//                      path.includes('inscription') ||
+//                      path.includes('oublie') ||
+//                      path.includes('reset');
 
-    // 1. Sécurité rapide
-    if (!token && !isPublic) {
-        window.location.replace('se connecté.html');
-        return;
-    }
+//     // 1. Sécurité rapide
+//     if (!token && !isPublic) {
+//         window.location.replace('se connecté.html');
+//         return;
+//     }
 
-     // ✅ NOUVEAU — Vérifier que le token est encore valide côté serveur
-    if (token && !isPublic) {
-        verifierToken(token).then(valide => {
-            if (!valide) {
-                localStorage.removeItem('token');
-                window.location.replace('se connecté.html');
-                return;
-            }
-            // Token valide → on affiche la page
-            afficherPage();
-        });
-    } else {
-        // Page publique → on affiche directement
-        afficherPage();
-    }
-});
-
-// ── Vérifie le token côté serveur ──────────────────────────
-async function verifierToken(token) {
-    try {
-        const res = await fetch(`${API_AUTH}/verify`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        return res.ok; // true si valide, false si expiré/invalide
-    } catch (e) {
-        return false; // Erreur réseau → considère comme invalide
-    }
-}
-
-// ── Affiche la page et charge les données ──────────────────
-function afficherPage() {
-    document.body.style.display = 'flex';
-
-    const grid  = document.getElementById('hotelsGrid');
-    const stats = document.getElementById('statHotels');
-
-    if (grid)  chargerHotels();
-    if (stats) chargerStatsDashboard();
-
-    setupNotifications();
-}
 
 //     // 2. On montre la page
 //     document.body.style.display = 'flex'; 
@@ -397,3 +356,74 @@ function afficherPage() {
 
 //     setupNotifications();
 // });
+
+
+let dejaCharge = false;
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (dejaCharge) return;
+    dejaCharge = true;
+
+    const token = localStorage.getItem('token');
+    const path  = decodeURIComponent(window.location.pathname);
+    
+    // Liste des pages autorisées sans badge
+    const isPublic = path.includes('se connecté') || 
+                     path.includes('inscription') || 
+                     path.includes('mode pass oublie') || 
+                     path.includes('reset');
+
+    // 🛡️ LE GARDIEN : Si pas de badge sur une page privée -> Éjection
+    if (!token && !isPublic) {
+        window.location.replace('se connecté.html');
+        return; 
+    }
+
+    // 🛡️ VÉRIFICATION DU BADGE (Si on est sur une page privée)
+    if (token && !isPublic) {
+        verifierToken(token).then(valide => {
+            if (!valide) {
+                localStorage.removeItem('token');
+                window.location.replace('se connecté.html');
+                return;
+            }
+            activerToutesLesFonctionnalites();
+        });
+    } else {
+        // Si on est sur une page publique, on active quand même les fonctions (pour le Login/Reg)
+        activerToutesLesFonctionnalites();
+    }
+});
+
+// ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
+function activerToutesLesFonctionnalites() {
+    // 1. On montre la page (Design Flex)
+    document.body.style.display = 'flex';
+
+    // 2. On branche les formulaires (C'est ce qui manquait !)
+    document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
+    document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
+    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+
+    // 3. On charge les données selon la page
+    if (document.getElementById('hotelsGrid')) chargerHotels();
+    if (document.getElementById('statHotels')) chargerStatsDashboard();
+
+    // 4. On active la cloche
+    setupNotifications();
+}
+
+// ── VÉRIFIER LE TOKEN (Appel léger au serveur) ──────────
+async function verifierToken(token) {
+    try {
+        // On utilise la route des hôtels (ou n'importe quelle route protégée)
+        // pour voir si le serveur accepte notre badge
+        const res = await fetch(`${API_HOTELS}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.ok; 
+    } catch (e) {
+        return false; 
+    }
+}
