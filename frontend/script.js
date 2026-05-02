@@ -35,31 +35,92 @@ async function chargerHotels() {
 }
 
 async function chargerStatsDashboard() {
+    const ids = ["statHotels", "statUsers", "statMessages", "statEmails", "statFormulaires", "statEnquetes"];
+
+    // 1. On met tout le monde en mode "Chargement..."
+    ids.forEach(id => animerChiffre(id));
+
     try {
         const response = await fetch(`${API_HOTELS}/stats/count`, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        if (!response.ok) return;
+        
+        if (!response.ok) throw new Error("Erreur stats");
+        
         const stats = await response.json();
+
+        // 2. Les données sont là, on lance l'animation réelle
         animerChiffre("statHotels", stats.hotels);
         animerChiffre("statUsers", stats.users);
         animerChiffre("statMessages", stats.messages);
         animerChiffre("statEmails", stats.emails);
         animerChiffre("statFormulaires", stats.formulaires);
         animerChiffre("statEnquetes", stats.enquetes);
-    } catch (e) { console.error(e); }
+
+    } catch (e) {
+        console.error(e);
+        // En cas d'erreur, on affiche 0 ou un petit message
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.textContent = "0";
+        });
+    }
 }
 
-function animerChiffre(id, fin) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    let debut = 0;
-    const timer = setInterval(() => {
-        debut += fin / 60;
-        if (debut >= fin) { el.textContent = fin; clearInterval(timer); }
-        else { el.textContent = Math.floor(debut); }
-    }, 16);
-}
+// async function chargerStatsDashboard() {
+//     try {
+//         const response = await fetch(`${API_HOTELS}/stats/count`, {
+//             headers: { 'Authorization': `Bearer ${getToken()}` }
+//         });
+//         if (!response.ok) return;
+//         const stats = await response.json();
+//         animerChiffre("statHotels", stats.hotels);
+//         animerChiffre("statUsers", stats.users);
+//         animerChiffre("statMessages", stats.messages);
+//         animerChiffre("statEmails", stats.emails);
+//         animerChiffre("statFormulaires", stats.formulaires);
+//         animerChiffre("statEnquetes", stats.enquetes);
+//     } catch (e) { console.error(e); }
+// }
+
+// function animerChiffre(id, fin) {
+//     const el = document.getElementById(id);
+//     if (!el) return;
+
+//     // 🟢 ÉTAPE 1 : Si la donnée n'est pas encore là, on affiche un état de chargement
+//     if (fin === undefined || fin === null) {
+//         el.innerHTML = '<span class="text-gray-300 animate-pulse text-sm">Chargement...</span>';
+//         return;
+//     }
+
+//     // 🟢 ÉTAPE 2 : Animation fluide du chiffre
+//     let debut = 0;
+//     const duree = 1000; // L'animation dure exactement 1 seconde
+//     const fps = 30;    // 30 images par seconde (très fluide mais léger)
+//     const totalFrames = (duree / 1000) * fps;
+//     const increment = fin / totalFrames;
+
+//     const timer = setInterval(() => {
+//         debut += increment;
+//         if (debut >= fin) {
+//             el.textContent = fin; // On affiche le chiffre exact à la fin
+//             clearInterval(timer);
+//         } else {
+//             el.textContent = Math.floor(debut);
+//         }
+//     }, 1000 / fps);
+// }
+
+// function animerChiffre(id, fin) {
+//     const el = document.getElementById(id);
+//     if (!el) return;
+//     let debut = 0;
+//     const timer = setInterval(() => {
+//         debut += fin / 60;
+//         if (debut >= fin) { el.textContent = fin; clearInterval(timer); }
+//         else { el.textContent = Math.floor(debut); }
+//     }, 16);
+// }
 
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
@@ -352,46 +413,3 @@ window.addEventListener('DOMContentLoaded', () => {
 
     setupNotifications();
 });
-
-// window.addEventListener('DOMContentLoaded', () => {
-//     const token = localStorage.getItem('token');
-    
-//     // 🟢 TRÈS IMPORTANT : On décode l'adresse pour lire les accents et espaces
-//     const currentPath = decodeURIComponent(window.location.pathname);
-
-//     // Définition des pages (avec tes noms exacts)
-//     const isLoginPage    = currentPath.includes('se connecté.html');
-//     const isRegisterPage = currentPath.includes('inscription.html');
-//     const isForgotPage   = currentPath.includes('mode pass oublie.html');
-//     const isResetPage    = currentPath.includes('reset-password.html');
-    
-//     const isPublicPage = isLoginPage || isRegisterPage || isForgotPage || isResetPage;
-
-//     // 1. PROTECTION SÉCURITÉ
-//     if (!token && !isPublicPage) {
-//         window.location.replace('se connecté.html');
-//         return;
-//     }
-
-//     // 2. AFFICHAGE (On force Flex pour ton design au milieu)
-//     document.body.style.display = 'flex'; 
-
-//     // 3. ACTIVATION DES FORMULAIRES
-//     if (isLoginPage) {
-//         document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
-//     }
-//     if (isRegisterPage) {
-//         document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-//     }
-//     if (isForgotPage) {
-//         document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-//     }
-//     if (isResetPage) {
-//         document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
-//     }
-
-//     // 4. CHARGEMENTS
-//     if (document.getElementById('hotelsGrid')) chargerHotels();
-//     if (document.getElementById('statHotels')) chargerStatsDashboard();
-//     setupNotifications();
-// });
