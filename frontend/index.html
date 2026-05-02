@@ -2,27 +2,35 @@
 <html lang="fr">
 
 <head>
+
+     <!-- 1. BLOQUER LE FLASH : On cache tout immédiatement -->
+    <style>
+        body { display: none !important; }
+    </style>
+
+    <!-- 2. LE GARDIEN ULTRA-RAPIDE -->
+    <script>
+        (function() {
+            const token = localStorage.getItem('token');
+            const path = decodeURIComponent(window.location.pathname);
+            const isPublic = path.includes('se connecté') || path.includes('inscription');
+
+            // Si pas de badge sur une page privée, on éjecte AVANT que l'écran ne s'allume
+            if (!token && !isPublic) {
+                window.location.replace('se connecté.html');
+            }
+        })();
+    </script>
+
+     <!-- 3. MÉTADONNÉES ET STYLES -->
+     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des hôtels</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-   <!-- LE GARDIEN PRIORITAIRE (Bien placé dans une balise script) -->
-     <!-- 1. BLOQUER LE CACHE DU NAVIGATEUR -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <script>
-        if (!localStorage.getItem('token')) {
-            window.location.replace('se connecté.html');
-        }
-    </script>
-
-    <style>
-        /* On cache le body par défaut pour éviter le flash */
-        body { display: none; } 
-    </style>
+   
 </head>
 
 <body class="bg-gray-100 h-screen flex overflow-hidden">
