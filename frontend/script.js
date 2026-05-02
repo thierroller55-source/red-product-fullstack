@@ -140,10 +140,43 @@ async function handleRegister(event) {
     else { alert("❌ Erreur"); }
 }
 
+async function verifierToken(token) {
+    try {
+        // 🟢 ON APPELLE LA NOUVELLE ROUTE DÉDIÉE
+        const res = await fetch(`${API_AUTH}/verify`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        return res.ok; // Renvoie true si le serveur répond 200 OK
+    } catch (e) {
+        console.error("Erreur vérification token:", e);
+        return false; 
+    }
+}
+
+// ── FONCTION DE DÉCONNEXION (SÉCURITÉ MAXIMALE) ───────────
 function seDeconnecter(event) {
     if (event) event.preventDefault();
-    localStorage.removeItem('token'); 
-    window.location.replace('se connecté.html'); 
+    
+    // 1. On supprime le badge de la mémoire
+    localStorage.removeItem('token');
+    
+    // 2. 🟢 PROTECTION HISTORIQUE : On vide le cache de navigation
+    // On force le navigateur à croire que la page précédente était déjà le login
+    if (window.history && window.history.pushState) {
+        window.history.pushState(null, null, 'se connecté.html');
+        window.onpopstate = function() {
+            // Si l'utilisateur clique sur "Retour", on le force à rester sur le login
+            window.history.pushState(null, null, 'se connecté.html');
+        };
+    }
+    
+    // 3. On redirige vers la connexion en remplaçant la page actuelle
+    window.location.replace('se connecté.html');
 }
 // ============================================================
 // 4. UI HELPERS (MENUS, RECHERCHE, NOTIFICATIONS)
@@ -317,46 +350,6 @@ async function handleResetPassword(event) {
 // ============================================================
 // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
 // ============================================================
-// On crée une variable pour savoir si on a déjà chargé les données
-// let dejaCharge = false;
-
-// window.addEventListener('DOMContentLoaded', () => {
-//     if (dejaCharge) return; // Si déjà fait, on arrête tout
-//     dejaCharge = true;
-
-//     const token = localStorage.getItem('token');
-//     const path = decodeURIComponent(window.location.pathname);
-//     const isPublic = path.includes('connect') ||
-//                      path.includes('inscription') ||
-//                      path.includes('oublie') ||
-//                      path.includes('reset');
-
-//     // 1. Sécurité rapide
-//     if (!token && !isPublic) {
-//         window.location.replace('se connecté.html');
-//         return;
-//     }
-
-
-//     // 2. On montre la page
-//     document.body.style.display = 'flex'; 
-
-//     // 3. On ne lance les fonctions lourDES que si on est sur la bonne page
-//     const grid = document.getElementById('hotelsGrid');
-//     if (grid) {
-//         console.log("Chargement léger des hôtels...");
-//         chargerHotels(); 
-//     }
-
-//     const stats = document.getElementById('statHotels');
-//     if (stats) {
-//         console.log("Chargement léger du Dashboard...");
-//         chargerStatsDashboard();
-//     }
-
-//     setupNotifications();
-// });
-
 
 let dejaCharge = false;
 
