@@ -83,33 +83,33 @@ async function chargerStatsDashboard() {
 //     } catch (e) { console.error(e); }
 // }
 
-// function animerChiffre(id, fin) {
-//     const el = document.getElementById(id);
-//     if (!el) return;
+function animerChiffre(id, fin) {
+    const el = document.getElementById(id);
+    if (!el) return;
 
-//     // 🟢 ÉTAPE 1 : Si la donnée n'est pas encore là, on affiche un état de chargement
-//     if (fin === undefined || fin === null) {
-//         el.innerHTML = '<span class="text-gray-300 animate-pulse text-sm">Chargement...</span>';
-//         return;
-//     }
+    // 🟢 ÉTAPE 1 : Si la donnée n'est pas encore là, on affiche un état de chargement
+    if (fin === undefined || fin === null) {
+        el.innerHTML = '<span class="text-gray-300 animate-pulse text-sm">Chargement...</span>';
+        return;
+    }
 
-//     // 🟢 ÉTAPE 2 : Animation fluide du chiffre
-//     let debut = 0;
-//     const duree = 1000; // L'animation dure exactement 1 seconde
-//     const fps = 30;    // 30 images par seconde (très fluide mais léger)
-//     const totalFrames = (duree / 1000) * fps;
-//     const increment = fin / totalFrames;
+    // 🟢 ÉTAPE 2 : Animation fluide du chiffre
+    let debut = 0;
+    const duree = 1000; // L'animation dure exactement 1 seconde
+    const fps = 30;    // 30 images par seconde (très fluide mais léger)
+    const totalFrames = (duree / 1000) * fps;
+    const increment = fin / totalFrames;
 
-//     const timer = setInterval(() => {
-//         debut += increment;
-//         if (debut >= fin) {
-//             el.textContent = fin; // On affiche le chiffre exact à la fin
-//             clearInterval(timer);
-//         } else {
-//             el.textContent = Math.floor(debut);
-//         }
-//     }, 1000 / fps);
-// }
+    const timer = setInterval(() => {
+        debut += increment;
+        if (debut >= fin) {
+            el.textContent = fin; // On affiche le chiffre exact à la fin
+            clearInterval(timer);
+        } else {
+            el.textContent = Math.floor(debut);
+        }
+    }, 1000 / fps);
+}
 
 // function animerChiffre(id, fin) {
 //     const el = document.getElementById(id);
