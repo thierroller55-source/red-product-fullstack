@@ -140,11 +140,25 @@ async function handleRegister(event) {
     } catch (e) { alert("Erreur serveur"); }
 }
 
+// verification du token en arrière-plan pour les pages privées
 async function verifierToken(token) {
     try {
-        const res = await fetch(`${API_AUTH}/verify`, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
-        return res.ok; 
-    } catch (e) { return false; }
+        const response = await fetch(`${API_AUTH}/verify`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        // Si le serveur répond 401 (Vrai refus), c'est fini
+        if (response.status === 401) return false;
+
+        // Si le serveur répond 200, c'est bon
+        return response.ok; 
+    } catch (e) {
+        // 🟢 S'il y a une erreur réseau (serveur qui dort), 
+        // on ne l'éjecte pas tout de suite, on dit que c'est "vrai" pour l'instant
+        console.warn("Le serveur est lent à répondre...");
+        return true; 
+    }
 }
 
 function seDeconnecter() {
