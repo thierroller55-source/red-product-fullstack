@@ -68,6 +68,66 @@ function ajouterCarteHotel(hotel) {
     grid.appendChild(card);
 }
 
+// ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
+async function addHotel() {
+    const formData = new FormData(); // Obligatoire pour envoyer une photo
+
+    // 1. On récupère le fichier image depuis ton HTML
+    const photoFile = document.getElementById('photoInput').files[0];
+    
+    // 2. On récupère les textes du formulaire
+    const nom     = document.getElementById('newNom').value;
+    const adresse = document.getElementById('newAdresse').value;
+    const email   = document.getElementById('newEmail').value;
+    const tel     = document.getElementById('newTel').value;
+    const prix    = document.getElementById('newPrix').value;
+    const devise  = document.getElementById('newDevise').value;
+
+    // Petite sécurité : on vérifie que les champs essentiels ne sont pas vides
+    if (!nom || !adresse || !prix) {
+        alert("Merci de remplir au moins le nom, l'adresse et le prix.");
+        return;
+    }
+
+    // 3. On remplit le "paquet" (FormData) à envoyer
+    formData.append('nom', nom);
+    formData.append('adresse', adresse);
+    formData.append('email', email);
+    formData.append('tel', tel);
+    formData.append('prix', prix);
+    formData.append('devise', devise);
+    
+    if (photoFile) {
+        formData.append('image', photoFile); // Le mot 'image' doit correspondre au backend
+    }
+
+    try {
+        // 4. ON ENVOIE AU SERVEUR RENDER
+        const response = await fetch(API_HOTELS, {
+            method: 'POST',
+            headers: {
+                // 🟢 TRÈS IMPORTANT : On envoie ton badge secret (Token)
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: formData // On envoie le paquet FormData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ L'hôtel a bien été enregistré !");
+            closeModal(); // Ferme la fenêtre
+            window.location.reload(); // Recharge la page pour voir le nouvel hôtel
+        } else {
+            alert("❌ Erreur : " + data.message);
+        }
+
+    } catch (error) {
+        console.error("Erreur ajout hôtel:", error);
+        alert("Impossible de contacter le serveur Render.");
+    }
+}
+
 // ============================================================
 // 3. AUTHENTIFICATION
 // ============================================================
@@ -194,8 +254,14 @@ function filterHotels() {
 function setupNotifications() {
     const btn = document.getElementById('notifBtn');
     const menu = document.getElementById('notifMenu');
+
     if (btn && menu) {
-        btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('hidden'); };
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const estOuvert = menu.classList.toggle('hidden');
+            if (!estOuvert) chargerNotifications(); // On charge les notifs quand on ouvre
+        };
+        // Fermer le menu si on clique ailleurs
         document.addEventListener('click', () => menu.classList.add('hidden'));
     }
 }
@@ -240,23 +306,34 @@ window.addEventListener('pageshow', (event) => {
 
 // ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
 function finaliserInitialisation() {
-    // 🟢 ON AFFICHE ENFIN LA PAGE (Seulement quand la sécurité a validé)
+    // 1. On montre la page
     document.body.style.setProperty('display', 'flex', 'important');
 
-    // Branchement des formulaires
+    // 2. Branchement des formulaires (Connexion, Inscription, etc.)
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
 
-    // Chargement des données réelles
+    // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
+    const addForm = document.getElementById('addHotelForm');
+    if (addForm) {
+        console.log("Formulaire d'ajout détecté");
+        addForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addHotel(); // Appelle ta fonction d'envoi vers Cloudinary
+        });
+    }
+
+    // 4. Chargement des données réelles
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
-    // Affichage du nom
+    // 5. Affichage du nom
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
 
+    // 🟢 6. ACTIVER LA CLOCHE
     setupNotifications();
 }
