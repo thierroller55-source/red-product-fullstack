@@ -289,7 +289,8 @@ function setupNotifications() {
 // ── 3.3 GESTION MOT DE PASSE OUBLIÉ (ENVOI EMAIL) ──────────
 async function handleForgotPassword(event) {
     if(event) event.preventDefault();
-    const email = document.getElementById('email').value;
+    const emailInput = document.getElementById('email');
+    const email = emailInput.value;
 
     try {
         const response = await fetch(`${API_AUTH}/forgot-password`, {
@@ -301,10 +302,12 @@ async function handleForgotPassword(event) {
         const data = await response.json();
 
         if (response.ok) {
-            alert("✅ " + data.message);
-            // On peut rediriger vers le login ou rester là
+            // ✅ SUCCÈS
+            alert("✅ " + data.message); // Affiche "Accès passé"
+            emailInput.value = ""; // ON VIDE LE CHAMP
         } else {
-            alert("❌ " + data.message);
+            // ❌ ERREUR
+            alert("❌ " + data.message); // Affiche "Message refusé"
         }
     } catch (error) {
         alert("Le serveur ne répond pas.");
@@ -388,8 +391,7 @@ window.addEventListener('pageshow', (event) => {
         return; 
     }
 
-    // 3. ACTIVATION DES FORMULAIRES (Selon la page où on se trouve)
-    
+
     // Page Login
     const loginForm = document.getElementById('loginForm');
     if (loginForm) loginForm.addEventListener('submit', seConnecter);
@@ -417,46 +419,3 @@ window.addEventListener('pageshow', (event) => {
         setupNotifications();
     }
 });
-
-// // On utilise 'pageshow' au lieu de 'DOMContentLoaded'
-// window.addEventListener('pageshow', (event) => {
-//     const token = localStorage.getItem('token');
-//     const path  = decodeURIComponent(window.location.pathname);
-    
-//     const isPublic = path.includes('se connecté') || 
-//                      path.includes('inscription') || 
-//                      path.includes('mode pass oublie') || 
-//                      path.includes('reset-password'); // Doit être là !
-
-//     // 🛡️ SI RETOUR ARRIÈRE SANS TOKEN -> ÉJECTION IMMÉDIATE
-//     if (!token && !isPublic) {
-//         window.location.replace('se connecté.html');
-//         return; 
-//     }
-
-//     // Si on vient du cache (bouton retour), on force la vérification
-//     if (token && !isPublic) {
-//         verifierToken(token).then(valide => {
-//             if (!valide) {
-//                 seDeconnecter(); // On détruit tout et on éjecte
-//                 return;
-//             }
-//             activerToutesLesFonctionnalites();
-//         });
-//     } else {
-//         activerToutesLesFonctionnalites();
-//     }
-// });
-
-// // ── FONCTION D'ACTIVATION ────────────────────────────────
-// function activerToutesLesFonctionnalites() {
-//     // 🟢 ON ALLUME LA LUMIÈRE ICI (On utilise 'flex' pour ton design)
-//     document.body.style.setProperty('display', 'flex', 'important');
-
-//     // Le reste de tes chargements...
-//     const loginForm = document.getElementById('loginForm');
-//     if (loginForm) loginForm.addEventListener('submit', seConnecter);
-//     if (document.getElementById('hotelsGrid')) chargerHotels();
-//     if (document.getElementById('statHotels')) chargerStatsDashboard();
-//     setupNotifications();
-// }
