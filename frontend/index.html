@@ -1,110 +1,198 @@
-const User = require('../models/userModel');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const Notification = require('../models/notificationModel');
-const crypto = require('crypto');
-const transporter = require('../config/mail');
+<!DOCTYPE html>
+<html lang="fr">
 
-// ── 1. INSCRIPTION ──
-exports.register = async (req, res) => {
-  try {
-    const { nom, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ nom, email, password: hashedPassword });
-    await newUser.save();
-    res.status(201).json({ success: true, message: "Utilisateur créé !" });
-  } catch (error) {
-    res.status(400).json({ success: false, message: "Erreur lors de l'inscription." });
-  }
-};
+<head>
+     <!-- 1. BLOQUER LE FLASH : On cache tout immédiatement -->
+    <style>
+        body { display: none !important; }
+    </style>
 
-// ── 2. CONNEXION ──
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ success: false, message: "Accès refusé" });
+    <!-- 2. LE GARDIEN ULTRA-RAPIDE -->
+    <script>
+        (function() {
+            const token = localStorage.getItem('token');
+            const path = decodeURIComponent(window.location.pathname);
+            const isPublic = path.includes('se connecté') || path.includes('inscription');
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ success: false, message: "Accès refusé" });
+            // Si pas de badge sur une page privée, on éjecte AVANT que l'écran ne s'allume
+            if (!token && !isPublic) {
+                window.location.replace('se connecté.html');
+            }
+        })();
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des hôtels</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="tailwind.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+</head>
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, message: "Accès passé", token, user: { nom: user.nom } });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Erreur serveur." });
-  }
-};
+<body class="bg-gray-100 h-screen flex overflow-hidden">
 
-// ── 3. NOTIFICATIONS ──
-exports.getNotifications = async (req, res) => {
-  try {
-    let query = { owner: req.user.id };
-    if (req.user.role === 'admin') query = {};
-    const notifs = await Notification.find(query).populate('owner', 'nom').sort({ date: -1 }).limit(10);
-    res.json(notifs);
-  } catch (error) {
-    res.status(500).json({ message: "Erreur serveur" });
-  }
-};
+    <!-- ✅ Overlay mobile -->
+    <div id="sidebarOverlay" onclick="fermerMenu()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
-// ── 4. MOT DE PASSE OUBLIÉ (CORRIGÉ) ──
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    <!-- ===== SIDEBAR ===== -->
+    <aside id="sidebar" class="w-56 sidebar-bg text-white flex flex-col justify-between py-6 px-4 fixed top-0 left-0 h-full z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div>
+            <div class="flex items-center gap-2 mb-8 px-2">
+                <div class="w-6 h-6 bg-white rounded flex items-center justify-center">
+                    <svg class="w-4 h-4 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z" /></svg>
+                </div>
+                <span class="font-bold text-sm tracking-widest uppercase">Red Product</span>
+            </div>
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "Message refusé" });
-    }
+            <p class="text-gray-400 text-[10px] uppercase tracking-widest mb-4 px-2 font-bold">Principal</p>
+            <nav class="flex flex-col gap-2">
+                <a href="dashweb.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/10 transition text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" stroke-width="2"/></svg>
+                    Dashboard
+                </a>
+                <a href="index.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white text-gray-800 font-bold text-xs shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3" stroke-width="2"/></svg>
+                    Liste des hôtels
+                </a>
+            </nav>
+        </div>
 
-    const token = crypto.randomBytes(20).toString('hex');
-    user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
-    await user.save();
+        <!-- Profil Utilisateur Dynamique -->
+        <div class="flex items-center gap-3 px-2 pt-4 border-t border-gray-600">
+            <img src="image/propriete.png" class="w-9 h-9 rounded-full object-cover border border-gray-500">
+            <div class="overflow-hidden">
+                <p id="userNameDisplay" class="text-[11px] font-bold truncate">Utilisateur</p>
+                <p class="text-green-400 text-[9px] flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> en ligne
+                </p>
+            </div>
+        </div>
+    </aside>
 
-    const resetUrl = `https://red-product-fullstack-6bal.vercel.app/reset-password.html?token=${token}`;
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="flex-1 lg:ml-56 flex flex-col overflow-hidden">
+        
+        <!-- TOPBAR -->
+        <header class="bg-white border-b h-16 flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
+            <div class="flex items-center gap-4">
+                <button onclick="ouvrirMenu()" class="lg:hidden text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2"/></svg></button>
+                <h1 class="text-lg font-bold text-gray-800">Liste des hôtels</h1>
+            </div>
 
-    // On tente d'envoyer le mail mais on ne fait pas planter le serveur si ça échoue
-    try {
-      await transporter.sendMail({
-        from: '"RED PRODUCT" <thierroller55@gmail.com>',
-        to: user.email,
-        subject: "Réinitialisation de votre mot de passe",
-        html: `<h4>Bonjour ${user.nom},</h4>
-               <p>Cliquez sur le lien ci-dessous pour changer votre mot de passe :</p>
-               <a href="${resetUrl}" style="background-color: #2a2a2a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Changer mon mot de passe</a>`
-      });
-      res.status(200).json({ success: true, message: "Accès passé" });
-    } catch (mailErr) {
-      console.log("Erreur mail (mais token créé) :", token);
-      res.status(200).json({ success: true, message: "Accès passé (Mail en attente)", debugToken: token });
-    }
+            <div class="flex items-center gap-5">
+                <!-- Recherche -->
+                <div class="relative hidden md:block">
+                    <input type="text" id="searchInput" oninput="filterHotels()" placeholder="Rechercher..." class="pl-10 pr-4 py-1.5 bg-gray-100 border-none rounded-full text-xs w-48 focus:ring-2 focus:ring-gray-300 transition-all">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
+                </div>
 
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Erreur technique" });
-  }
-};
+                <!-- 🔔 Notifications -->
+                <div class="relative">
+                    <button id="notifBtn" class="relative text-gray-500 hover:text-gray-800 transition-colors pt-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-width="2"/></svg>
+                        <span class="absolute -top-0.5 -right-0.5 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md hidden">0</span>
+                    </button>
+                    <!-- Menu Notifications -->
+                    <div id="notifMenu" class="hidden absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 overflow-hidden">
+                        <div class="p-3 border-b font-bold text-xs bg-gray-50 uppercase tracking-tighter">Notifications</div>
+                        <div id="notifList" class="max-h-60 overflow-y-auto">
+                            <!-- Rempli par le JS -->
+                        </div>
+                    </div>
+                </div>
 
-// ── 5. RÉINITIALISATION RÉELLE ──
-exports.resetPassword = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { password } = req.body;
+                <img src="image/propriete.png" class="w-8 h-8 rounded-full object-cover">
+                
+                <!-- Déconnexion -->
+                <button onclick="seDeconnecter(event)" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg>
+                </button>
+            </div>
+        </header>
 
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
-    });
+        <main class="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50">
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-2xl font-light text-gray-700">Hôtels</h2>
+                    <span id="hotelCount" class="text-2xl font-thin text-gray-400 border-l pl-3">0</span>
+                </div>
+                <button onclick="openModal()" class="bg-white border border-gray-300 px-5 py-2 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm">+ Créer un nouveau hôtel</button>
+            </div>
 
-    if (!user) return res.status(400).json({ message: "Lien invalide ou expiré." });
+            <!-- Grille des Hôtels -->
+            <div id="hotelsGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-24">
+                <!-- Les cartes arrivent via script.js -->
+            </div>
 
-    user.password = await bcrypt.hash(password, 10);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
+            <!-- Message Aucun Résultat -->
+            <div id="noResult" class="hidden text-center py-20">
+                <p class="text-gray-400 italic">Aucun hôtel trouvé pour cette recherche.</p>
+            </div>
+        </main>
+    </div>
 
-    res.json({ success: true, message: "Félicitations ! Votre mot de passe a été modifié." });
-  } catch (error) {
-    res.status(500).json({ message: "Erreur lors de la réinitialisation." });
-  }
-};
+    <!-- ===== MODAL CRÉATION (CLOUDINARY) ===== -->
+    <div id="modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h3 class="font-bold uppercase text-xs tracking-widest text-gray-500">Ajouter un nouvel établissement</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 text-xl">✕</button>
+            </div>
+            
+            <form id="addHotelForm" onsubmit="event.preventDefault(); addHotel();" class="p-6 space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-400">Nom</label>
+                        <input type="text" id="newNom" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-400">Adresse</label>
+                        <input type="text" id="newAdresse" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-400">Email</label>
+                        <input type="email" id="newEmail" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-400">Téléphone</label>
+                        <input type="text" id="newTel" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-400">Prix par nuit</label>
+                        <input type="number" id="newPrix" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-400">Devise</label>
+                        <select id="newDevise" class="w-full border-b py-2 focus:outline-none text-sm bg-transparent">
+                            <option value="F XOF">F XOF</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold uppercase text-gray-400">Photo de l'hôtel</label>
+                    <div onclick="document.getElementById('photoInput').click()" class="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition">
+                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
+                        <p class="text-xs text-gray-400 mt-2">Cliquez pour choisir un fichier</p>
+                        <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)" class="hidden">
+                    </div>
+                    <img id="preview" src="" class="hidden w-full h-32 object-cover rounded-xl">
+                </div>
+
+                <div id="formError" class="hidden text-red-500 text-[10px] font-bold uppercase">⚠ Veuillez remplir tous les champs obligatoires.</div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="submit" class="bg-gray-800 text-white px-10 py-3 rounded-xl font-bold text-sm hover:bg-black transition shadow-lg">Enregistrer l'hôtel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chargement du script -->
+    <script src="script.js"></script>
+</body>
+</html>
