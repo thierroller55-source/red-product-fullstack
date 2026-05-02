@@ -375,47 +375,63 @@ async function handleResetPassword(event) {
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE)
 // ============================================================
 
+// Variable pour éviter que les fonctions se lancent deux fois
+let initialisationFaite = false;
+
 window.addEventListener('pageshow', (event) => {
     const token = localStorage.getItem('token');
     const path  = decodeURIComponent(window.location.pathname);
     
-    // 1. Liste des pages autorisées sans badge
+    // 1. LISTE BLANCHE (Pages autorisées sans badge)
     const isPublic = path.includes('se connecté') || 
                      path.includes('inscription') || 
                      path.includes('mode pass oublie') || 
-                     path.includes('reset-password'); // 🟢 On autorise la page reset
+                     path.includes('reset-password');
 
-    // 2. LE GARDIEN (SÉCURITÉ)
+    // 🛡️ LE GARDIEN (SÉCURITÉ IMMÉDIATE)
+    // Si pas de badge sur page privée -> On éjecte au login sans rien charger
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return; 
     }
 
-
-    // Page Login
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) loginForm.addEventListener('submit', seConnecter);
-     
-    // Page Inscription
-    const regForm = document.getElementById('registrationForm');
-    if (regForm) regForm.addEventListener('submit', handleRegister);
-
-    // Page Mot de passe oublié (Email)
-    const forgotForm = document.getElementById('forgotPasswordForm');
-    if (forgotForm) forgotForm.addEventListener('submit', handleForgotPassword);
-
-    // 🟢 NOUVEAU : Page Réinitialisation (Nouveau mot de passe)
-    const resetForm = document.getElementById('resetPasswordForm');
-    if (resetForm) {
-        console.log("Système de réinitialisation activé");
-        resetForm.addEventListener('submit', handleResetPassword);
+    // 🟢 AFFICHAGE INSTANTANÉ (ÉVITE L'ÉCRAN BLANC)
+    // Si on a un badge ou qu'on est sur une page publique, on montre la page TOUT DE SUITE
+    if (token || isPublic) {
+        document.body.style.display = 'flex'; 
+        
+        // On n'active les boutons et les chargements qu'une seule fois
+        if (!initialisationFaite) {
+            activerToutesLesFonctionnalites();
+            initialisationFaite = true;
+        }
     }
 
-    // 4. CHARGEMENTS ET AFFICHAGE
-    if (token || isPublic) {
-        document.body.style.display = 'flex'; // On montre le site
-        if (document.getElementById('hotelsGrid')) chargerHotels();
-        if (document.getElementById('statHotels')) chargerStatsDashboard();
-        setupNotifications();
+    // 🛡️ VÉRIFICATION DE SÉCURITÉ EN ARRIÈRE-PLAN (TUE LE BOUTON RETOUR)
+    // Si on est sur une page privée, on demande discrètement au serveur si le badge est encore bon
+    if (token && !isPublic) {
+        verifierToken(token).then(valide => {
+            if (!valide) {
+                // Si le serveur dit NON (par exemple après une déconnexion) -> On nettoie et on dégage
+                localStorage.removeItem('token');
+                window.location.replace('se connecté.html');
+            }
+        });
     }
 });
+
+// ── FONCTION QUI ACTIVE TOUT LE SITE ───────────────────
+function activerToutesLesFonctionnalites() {
+    // Branchement des formulaires
+    document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
+    document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
+    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
+    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+
+    // Chargement des données selon la page
+    if (document.getElementById('hotelsGrid')) chargerHotels();
+    if (document.getElementById('statHotels')) chargerStatsDashboard();
+
+    // Activer la cloche
+    setupNotifications();
+}
