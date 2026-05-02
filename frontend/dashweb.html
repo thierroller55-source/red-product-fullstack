@@ -7,19 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-   <!-- 1. BLOQUER LE FLASH : On cache tout immédiatement -->
+    <!-- 1. BLOQUER LE FLASH : On cache tout immédiatement -->
     <style>
         body { display: none !important; }
     </style>
 
     <!-- 2. LE GARDIEN ULTRA-RAPIDE -->
-   <script>
-    // Gardien simple pour index.html
-    if (!localStorage.getItem('token')) {
-        window.location.replace('se connecté.html');
-    }
-</script>
-    
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.replace('se connecté.html');
+        }
+    </script>
 </head>
 
 
