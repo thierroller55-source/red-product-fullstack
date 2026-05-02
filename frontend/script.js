@@ -326,7 +326,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const token = localStorage.getItem('token');
     const path = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('connect') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
+    const isPublic = path.includes('connect') ||
+                     path.includes('inscription') ||
+                     path.includes('oublie') ||
+                     path.includes('reset');
 
     // 1. Sécurité rapide
     if (!token && !isPublic) {
@@ -334,21 +337,63 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 2. On montre la page
-    document.body.style.display = 'flex'; 
-
-    // 3. On ne lance les fonctions lourDES que si on est sur la bonne page
-    const grid = document.getElementById('hotelsGrid');
-    if (grid) {
-        console.log("Chargement léger des hôtels...");
-        chargerHotels(); 
+     // ✅ NOUVEAU — Vérifier que le token est encore valide côté serveur
+    if (token && !isPublic) {
+        verifierToken(token).then(valide => {
+            if (!valide) {
+                localStorage.removeItem('token');
+                window.location.replace('se connecté.html');
+                return;
+            }
+            // Token valide → on affiche la page
+            afficherPage();
+        });
+    } else {
+        // Page publique → on affiche directement
+        afficherPage();
     }
+});
 
+// ── Vérifie le token côté serveur ──────────────────────────
+async function verifierToken(token) {
+    try {
+        const res = await fetch(`${API_AUTH}/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.ok; // true si valide, false si expiré/invalide
+    } catch (e) {
+        return false; // Erreur réseau → considère comme invalide
+    }
+}
+
+// ── Affiche la page et charge les données ──────────────────
+function afficherPage() {
+    document.body.style.display = 'flex';
+
+    const grid  = document.getElementById('hotelsGrid');
     const stats = document.getElementById('statHotels');
-    if (stats) {
-        console.log("Chargement léger du Dashboard...");
-        chargerStatsDashboard();
-    }
+
+    if (grid)  chargerHotels();
+    if (stats) chargerStatsDashboard();
 
     setupNotifications();
-});
+}
+
+//     // 2. On montre la page
+//     document.body.style.display = 'flex'; 
+
+//     // 3. On ne lance les fonctions lourDES que si on est sur la bonne page
+//     const grid = document.getElementById('hotelsGrid');
+//     if (grid) {
+//         console.log("Chargement léger des hôtels...");
+//         chargerHotels(); 
+//     }
+
+//     const stats = document.getElementById('statHotels');
+//     if (stats) {
+//         console.log("Chargement léger du Dashboard...");
+//         chargerStatsDashboard();
+//     }
+
+//     setupNotifications();
+// });
