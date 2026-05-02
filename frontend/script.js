@@ -348,75 +348,127 @@ async function handleResetPassword(event) {
 }
 
 // ============================================================
-// 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
+// 5. INITIALISATION (SÉCURITÉ MAXIMALE)
 // ============================================================
 
-let dejaCharge = false;
-
-window.addEventListener('DOMContentLoaded', () => {
-    if (dejaCharge) return;
-    dejaCharge = true;
-
+// On utilise 'pageshow' au lieu de 'DOMContentLoaded'
+window.addEventListener('pageshow', (event) => {
     const token = localStorage.getItem('token');
     const path  = decodeURIComponent(window.location.pathname);
     
-    // Liste des pages autorisées sans badge
     const isPublic = path.includes('se connecté') || 
                      path.includes('inscription') || 
                      path.includes('mode pass oublie') || 
                      path.includes('reset');
 
-    // 🛡️ LE GARDIEN : Si pas de badge sur une page privée -> Éjection
+    // 🛡️ SI RETOUR ARRIÈRE SANS TOKEN -> ÉJECTION IMMÉDIATE
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
         return; 
     }
 
-    // 🛡️ VÉRIFICATION DU BADGE (Si on est sur une page privée)
+    // Si on vient du cache (bouton retour), on force la vérification
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
             if (!valide) {
-                localStorage.removeItem('token');
-                window.location.replace('se connecté.html');
+                seDeconnecter(); // On détruit tout et on éjecte
                 return;
             }
             activerToutesLesFonctionnalites();
         });
     } else {
-        // Si on est sur une page publique, on active quand même les fonctions (pour le Login/Reg)
         activerToutesLesFonctionnalites();
     }
 });
 
-// ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
+// ── FONCTION D'ACTIVATION ────────────────────────────────
 function activerToutesLesFonctionnalites() {
-    // 1. On montre la page (Design Flex)
     document.body.style.display = 'flex';
 
-    // 2. On branche les formulaires (C'est ce qui manquait !)
-    document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
-    document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+    // On branche les formulaires (login, inscription, etc.)
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) loginForm.addEventListener('submit', seConnecter);
+     
+    const regForm = document.getElementById('registrationForm');
+    if (regForm) regForm.addEventListener('submit', handleRegister);
 
-    // 3. On charge les données selon la page
+    // Chargements des données
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
 
-    // 4. On active la cloche
     setupNotifications();
 }
 
-// ── VÉRIFIER LE TOKEN (Appel léger au serveur) ──────────
-async function verifierToken(token) {
-    try {
-        // On utilise la route des hôtels (ou n'importe quelle route protégée)
-        // pour voir si le serveur accepte notre badge
-        const res = await fetch(`${API_HOTELS}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        return res.ok; 
-    } catch (e) {
-        return false; 
-    }
-}
+// // ============================================================
+// // 5. INITIALISATION (AVEC LE GARDIEN DE SÉCURITÉ)
+// // ============================================================
+
+// let dejaCharge = false;
+
+// window.addEventListener('DOMContentLoaded', () => {
+//     if (dejaCharge) return;
+//     dejaCharge = true;
+
+//     const token = localStorage.getItem('token');
+//     const path  = decodeURIComponent(window.location.pathname);
+    
+//     // Liste des pages autorisées sans badge
+//     const isPublic = path.includes('se connecté') || 
+//                      path.includes('inscription') || 
+//                      path.includes('mode pass oublie') || 
+//                      path.includes('reset');
+
+//     // 🛡️ LE GARDIEN : Si pas de badge sur une page privée -> Éjection
+//     if (!token && !isPublic) {
+//         window.location.replace('se connecté.html');
+//         return; 
+//     }
+
+//     // 🛡️ VÉRIFICATION DU BADGE (Si on est sur une page privée)
+//     if (token && !isPublic) {
+//         verifierToken(token).then(valide => {
+//             if (!valide) {
+//                 localStorage.removeItem('token');
+//                 window.location.replace('se connecté.html');
+//                 return;
+//             }
+//             activerToutesLesFonctionnalites();
+//         });
+//     } else {
+//         // Si on est sur une page publique, on active quand même les fonctions (pour le Login/Reg)
+//         activerToutesLesFonctionnalites();
+//     }
+// });
+
+// // ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
+// function activerToutesLesFonctionnalites() {
+//     // 1. On montre la page (Design Flex)
+//     document.body.style.display = 'flex';
+
+//     // 2. On branche les formulaires (C'est ce qui manquait !)
+//     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
+//     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
+//     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
+//     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+
+//     // 3. On charge les données selon la page
+//     if (document.getElementById('hotelsGrid')) chargerHotels();
+//     if (document.getElementById('statHotels')) chargerStatsDashboard();
+
+//     // 4. On active la cloche
+//     setupNotifications();
+// }
+
+// // ── VÉRIFIER LE TOKEN (Appel léger au serveur) ──────────
+// async function verifierToken(token) {
+//     try {
+//         // On utilise la route des hôtels (ou n'importe quelle route protégée)
+//         // pour voir si le serveur accepte notre badge
+//         const res = await fetch(`${API_HOTELS}`, {
+//             headers: { 'Authorization': `Bearer ${token}` }
+//         });
+//         return res.ok; 
+//     } catch (e) {
+//         return false; 
+//     }
+// }
