@@ -375,63 +375,31 @@ async function handleResetPassword(event) {
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE)
 // ============================================================
 
-// Variable pour éviter que les fonctions se lancent deux fois
-let initialisationFaite = false;
-
-window.addEventListener('pageshow', (event) => {
+window.addEventListener('pageshow', () => {
     const token = localStorage.getItem('token');
     const path  = decodeURIComponent(window.location.pathname);
-    
-    // 1. LISTE BLANCHE (Pages autorisées sans badge)
-    const isPublic = path.includes('se connecté') || 
-                     path.includes('inscription') || 
-                     path.includes('mode pass oublie') || 
-                     path.includes('reset-password');
+    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('oublie') || path.includes('reset');
 
-    // 🛡️ LE GARDIEN (SÉCURITÉ IMMÉDIATE)
-    // Si pas de badge sur page privée -> On éjecte au login sans rien charger
+    // 1. Si pas de badge sur page privée -> Éjection immédiate
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
-        return; 
+        return;
     }
 
-    // 🟢 AFFICHAGE INSTANTANÉ (ÉVITE L'ÉCRAN BLANC)
-    // Si on a un badge ou qu'on est sur une page publique, on montre la page TOUT DE SUITE
+    // 2. 🟢 LA CORRECTION : Si on a un badge, on montre la page TOUT DE SUITE
+    // On n'attend pas le serveur pour "allumer la lumière"
     if (token || isPublic) {
-        document.body.style.display = 'flex'; 
-        
-        // On n'active les boutons et les chargements qu'une seule fois
-        if (!initialisationFaite) {
-            activerToutesLesFonctionnalites();
-            initialisationFaite = true;
-        }
+        document.body.style.setProperty('display', 'flex', 'important');
+        activerToutesLesFonctionnalites();
     }
 
-    // 🛡️ VÉRIFICATION DE SÉCURITÉ EN ARRIÈRE-PLAN (TUE LE BOUTON RETOUR)
-    // Si on est sur une page privée, on demande discrètement au serveur si le badge est encore bon
+    // 3. On vérifie quand même le badge en arrière-plan pour la sécurité
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
             if (!valide) {
-                // Si le serveur dit NON (par exemple après une déconnexion) -> On nettoie et on dégage
-                localStorage.removeItem('token');
-                window.location.replace('se connecté.html');
+                alert("Session expirée");
+                seDeconnecter();
             }
         });
     }
 });
-
-// ── FONCTION QUI ACTIVE TOUT LE SITE ───────────────────
-function activerToutesLesFonctionnalites() {
-    // Branchement des formulaires
-    document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
-    document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-    document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-    document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
-
-    // Chargement des données selon la page
-    if (document.getElementById('hotelsGrid')) chargerHotels();
-    if (document.getElementById('statHotels')) chargerStatsDashboard();
-
-    // Activer la cloche
-    setupNotifications();
-}
