@@ -56,11 +56,11 @@ exports.forgotPassword = async (req, res) => {
 
     const token = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000; 
+    user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
 
-    const resetUrl = `https://red-product-fullstack-6bal.vercel.app/reset-password.html?token=${token}`;
-
+    // ✅ CORRECT — GitHub Pages
+    const resetUrl = `https://thierroller55-source.github.io/red-product-fullstack/frontend/reset-password.html?token=${token}`;
     try {
       await transporter.sendMail({
         from: '"RED PRODUCT" <thierroller55@gmail.com>',

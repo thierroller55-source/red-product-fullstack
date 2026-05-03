@@ -1,538 +1,3 @@
-// // ============================================================
-// // 1. CONFIGURATION ET CONSTANTES
-// // ============================================================
-// const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
-// const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';
-
-// const getToken = () => localStorage.getItem('token');
-
-// // ============================================================
-// // 2. GESTION DES HÔTELS & STATISTIQUES
-// // ============================================================
-// async function chargerHotels() {
-//     const grid = document.getElementById('hotelsGrid');
-//     if (!grid) return;
-
-//     try {
-//         // Envoi immédiat de la requête
-//         const response = await fetch(API_HOTELS, {
-//             headers: {
-//                 'Authorization': `Bearer ${getToken()}`
-//             }
-//         });
-
-//         const hotels = await response.json();
-
-//         // Sécurité si la session a expiré
-//         if (response.status === 401) {
-//             localStorage.removeItem('token');
-//             window.location.replace('se connecté.html');
-//             return;
-//         }
-
-//         // Affichage instantané dès que les données arrivent
-//         if (Array.isArray(hotels)) {
-//             grid.innerHTML = ''; 
-//             hotels.forEach(hotel => ajouterCarteHotel(hotel));
-            
-//             const count = document.getElementById('hotelCount');
-//             if (count) count.textContent = hotels.length;
-//         }
-
-//     } catch (err) {
-//         console.error('Erreur chargement hôtels :', err);
-//     }
-// }
-
-// async function chargerStatsDashboard() {
-//     try {
-//         const response = await fetch(`${API_HOTELS}/stats/count`, {
-//             headers: { 'Authorization': `Bearer ${getToken()}` }
-//         });
-//         if (!response.ok) return;
-//         const stats = await response.json();
-//         animerChiffre("statHotels", stats.hotels);
-//         animerChiffre("statUsers", stats.users);
-//         animerChiffre("statMessages", stats.messages);
-//         animerChiffre("statEmails", stats.emails);
-//         animerChiffre("statFormulaires", stats.formulaires);
-//         animerChiffre("statEnquetes", stats.enquetes);
-//     } catch (e) { console.error(e); }
-// }
-
-// function animerChiffre(id, fin) {
-//     const el = document.getElementById(id);
-//     if (!el) return;
-//     let debut = 0;
-//     const timer = setInterval(() => {
-//         debut += fin / 30;
-//         if (debut >= fin) { el.textContent = fin; clearInterval(timer); }
-//         else { el.textContent = Math.floor(debut); }
-//     }, 30);
-// }
-
-// function ajouterCarteHotel(hotel) {
-//     const grid = document.getElementById('hotelsGrid');
-//     const token = getToken(); 
-//     const imgUrl = hotel.image || 'https://placehold.co/400x250?text=Pas+d+image';
-//     const card = document.createElement('div');
-//     card.id = `hotel-${hotel._id}`;
-//     card.className = 'hotel-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer relative';
-//     card.setAttribute('data-search', `${hotel.nom} ${hotel.adresse}`.toLowerCase());
-//     const deleteBtn = token ? `<button onclick="event.stopPropagation(); supprimerHotel('${hotel._id}')" class="absolute top-2 right-2 bg-red-600 hover:bg-red-800 text-white p-2 rounded-full shadow-lg transition-colors z-10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>` : "";
-//     card.innerHTML = `<div class="overflow-hidden h-44 relative"><img src="${imgUrl}" class="w-full h-full object-cover" />${deleteBtn}</div><div class="p-4"><p class="text-[10px] text-orange font-medium mb-0.5">${hotel.adresse}</p><h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3><p class="text-xs text-gray-600">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p></div>`;
-//     grid.appendChild(card);
-// }
-
-// // ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
-// async function addHotel() {
-//     const submitBtn = document.querySelector('#addHotelForm button[type="submit"]');
-    
-//     // 🟢 SÉCURITÉ : Si le bouton est déjà désactivé, on arrête tout (empêche le double envoi)
-//     if (submitBtn.disabled) return;
-
-//     const formData = new FormData();
-//     const photoFile = document.getElementById('photoInput').files[0];
-    
-//     const nom     = document.getElementById('newNom').value;
-//     const adresse = document.getElementById('newAdresse').value;
-//     const email   = document.getElementById('newEmail').value;
-//     const tel     = document.getElementById('newTel').value;
-//     const prix    = document.getElementById('newPrix').value;
-//     const devise  = document.getElementById('newDevise').value;
-
-//     if (!nom || !adresse || !prix || !photoFile) {
-//         alert("Merci de remplir tous les champs et d'ajouter une photo.");
-//         return;
-//     }
-
-//     // 🟢 ON BLOQUE LE BOUTON IMMÉDIATEMENT
-//     submitBtn.disabled = true;
-//     submitBtn.textContent = "Enregistrement...";
-
-//     formData.append('nom', nom);
-//     formData.append('adresse', adresse);
-//     formData.append('email', email);
-//     formData.append('tel', tel);
-//     formData.append('prix', prix);
-//     formData.append('devise', devise);
-//     formData.append('image', photoFile);
-
-//     try {
-//         const response = await fetch(API_HOTELS, {
-//             method: 'POST',
-//             headers: { 'Authorization': `Bearer ${getToken()}` },
-//             body: formData 
-//         });
-
-//         if (response.ok) {
-//             // Pas d'alerte, on recharge tout de suite
-//             window.location.reload(); 
-//         } else {
-//             // En cas d'erreur, on redonne la main au bouton
-//             submitBtn.disabled = false;
-//             submitBtn.textContent = "Enregistrer";
-//             alert("Erreur lors de l'enregistrement.");
-//         }
-//     } catch (error) {
-//         submitBtn.disabled = false;
-//         submitBtn.textContent = "Enregistrer";
-//         console.error(error);
-//     }
-// }
-
-
-// // ── SUPPRESSION AUTOMATIQUE (SANS BOUTON OK) ──────────────
-// async function supprimerHotel(id) {
-//     try {
-//         const response = await fetch(`${API_HOTELS}/${id}`, {
-//             method: 'DELETE',
-//             headers: { 'Authorization': `Bearer ${getToken()}` }
-//         });
-
-//         if (response.ok) {
-//             // 🟢 ÉTAPE 1 : On cherche la carte par son ID et on l'efface de l'écran
-//             const card = document.getElementById(`hotel-${id}`);
-//             if (card) {
-//                 card.remove(); // Supprime l'élément HTML sans recharger
-//             }
-            
-//             // 🟢 ÉTAPE 2 : On recharge les données en arrière-plan pour le compteur
-//             chargerHotels(); 
-            
-//             console.log("Hôtel supprimé de l'écran");
-//         }
-//     } catch (error) { console.error(error); }
-// }
-
-// function previewPhoto(event) {
-//     const file = event.target.files[0];
-//     const preview = document.getElementById('preview');
-//     const placeholder = document.getElementById('uploadPlaceholder');
-
-//     if (file) {
-//         const reader = new FileReader();
-//         reader.onload = () => { 
-//             if(preview) {
-//                 preview.src = reader.result; 
-//                 preview.classList.remove('hidden');
-//                 if(placeholder) placeholder.classList.add('hidden'); // Cache l'icône +
-//             }
-//         };
-//         reader.readAsDataURL(file);
-//     }
-// }
-
-// // ============================================================
-// // 3. AUTHENTIFICATION
-// // ============================================================
-
-// async function seConnecter(event) {
-//     event.preventDefault();
-    
-//     // Récupération des éléments du bouton pour l'animation
-//     const submitBtn = document.getElementById('submitBtn');
-//     const spinner = document.getElementById('spinner');
-//     const btnText = document.getElementById('btnText');
-
-//     // Activer le chargement
-//     if (submitBtn) {
-//         submitBtn.disabled = true;
-//         spinner?.classList.remove('hidden');
-//         if (btnText) btnText.textContent = "Connexion...";
-//     }
-
-//     const email = document.getElementById('email').value;
-//     const password = document.getElementById('password').value;
-
-//     try {
-//         const res = await fetch(`${API_AUTH}/login`, { 
-//             method: 'POST', 
-//             headers: { 'Content-Type': 'application/json' }, 
-//             body: JSON.stringify({ email, password }) 
-//         });
-        
-//         const data = await res.json();
-        
-//         if (res.ok) { 
-//             localStorage.setItem('token', data.token); 
-//             if(data.user) localStorage.setItem('userName', data.user.nom);
-//             window.location.replace('dashweb.html'); 
-//         } else { 
-//             alert("❌ " + data.message); 
-//             // Remettre le bouton à zéro
-//             if (submitBtn) {
-//                 submitBtn.disabled = false;
-//                 spinner?.classList.add('hidden');
-//                 if (btnText) btnText.textContent = "Se connecter";
-//             }
-//         }
-//     } catch (e) { 
-//         alert("Erreur serveur : vérifiez votre connexion."); 
-//         if (submitBtn) {
-//             submitBtn.disabled = false;
-//             spinner?.classList.add('hidden');
-//             if (btnText) btnText.textContent = "Se connecter";
-//         }
-//     }
-// }
-
-// async function handleRegister(event) {
-//     event.preventDefault();
-//     const nom = document.getElementById('name').value;
-//     const email = document.getElementById('email').value;
-//     const password = document.getElementById('password').value;
-//     try {
-//         const res = await fetch(`${API_AUTH}/register`, { 
-//             method: 'POST', 
-//             headers: { 'Content-Type': 'application/json' }, 
-//             body: JSON.stringify({ nom, email, password }) 
-//         });
-//         if (res.ok) { 
-//             alert("✅ Inscription réussie !"); 
-//             window.location.replace('se connecté.html'); 
-//         } else { alert("❌ Erreur lors de l'inscription"); }
-//     } catch (e) { alert("Erreur serveur"); }
-// }
-
-// async function handleForgotPassword(event) {
-//     if(event) event.preventDefault();
-    
-//     const emailInput = document.getElementById('email');
-//     const submitBtn = event.target.querySelector('button'); // On récupère le bouton
-    
-//     if (!emailInput.value) return alert("Merci de taper votre e-mail");
-
-//     try {
-//         // 🟢 ON MONTRE QUE ÇA TRAVAILLE
-//         submitBtn.disabled = true;
-//         submitBtn.textContent = "Envoi en cours...";
-
-//         const response = await fetch(`${API_AUTH}/forgot-password`, {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify({ email: emailInput.value.trim() })
-//         });
-
-//         const data = await response.json();
-
-//         if (response.ok) {
-//             alert("✅ " + data.message);
-//             emailInput.value = ""; // Vide le champ
-//         } else {
-//             alert("❌ " + data.message);
-//         }
-//     } catch (error) {
-//         alert("Erreur : Le serveur Render met trop de temps à répondre.");
-//     } finally {
-//         // On remet le bouton normal
-//         submitBtn.disabled = false;
-//         submitBtn.textContent = "Envoyer";
-//     }
-// }
-
-// // verification du token en arrière-plan pour les pages privées
-// async function verifierToken(token) {
-//     try {
-//         const response = await fetch(`${API_AUTH}/verify`, {
-//             method: 'GET',
-//             headers: { 'Authorization': `Bearer ${token}` }
-//         });
-
-//         // 🟢 ON N'ÉJECTE QUE SI LE SERVEUR RÉPOND "401 UNAUTHORIZED" (Vrai refus)
-//         if (response.status === 401) {
-//             return false;
-//         }
-
-//         // Pour tous les autres cas (200 OK ou Serveur en train de dormir)
-//         // On renvoie "true" pour laisser l'utilisateur tranquille
-//         return true; 
-
-//     } catch (e) {
-//         // Si le réseau plante ou que Render dort, on ne bloque pas l'utilisateur
-//         console.warn("Le serveur est lent, attente du réveil...");
-//         return true; 
-//     }
-// }
-
-// function seDeconnecter(event) {
-//     if (event) event.preventDefault();
-    
-//     // 1. On vide TOUTE la mémoire (Token et Nom)
-//     localStorage.clear(); 
-    
-//     // 2. On remplace la page actuelle dans l'historique par le login
-//     // Cela empêche physiquement de faire "Retour" vers le Dashboard
-//     window.location.replace('se connecté.html'); 
-// }
-
-// // ============================================================
-// // 4. UI HELPERS
-// // ============================================================
-// // ── OUVRIR LE MENU MOBILE (HAMBURGER) ──
-// function ouvrirMenu() {
-//     const sidebar = document.getElementById('sidebar');
-//     const overlay = document.getElementById('sidebarOverlay');
-//     if (sidebar && overlay) {
-//         sidebar.classList.remove('-translate-x-full');
-//         overlay.classList.remove('hidden');
-//     }
-// }
-
-// // ── FERMER LE MENU MOBILE ──
-// function fermerMenu() {
-//     const sidebar = document.getElementById('sidebar');
-//     const overlay = document.getElementById('sidebarOverlay');
-//     if (sidebar && overlay) {
-//         sidebar.classList.add('-translate-x-full');
-//         overlay.classList.add('hidden');
-//     }
-// }
-
-// // ── AFFICHER LA BARRE DE RECHERCHE MOBILE ──
-// function toggleSearchMobile() {
-//     const searchBar = document.getElementById('searchMobile');
-//     if (searchBar) {
-//         searchBar.classList.toggle('hidden');
-//     }
-// }
-
-// function togglePassword() {
-//     const input = document.getElementById('password');
-//     if (input) input.type = (input.type === 'password') ? 'text' : 'password';
-// }
-
-// function filterHotels() {
-//     const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
-//     document.querySelectorAll('.hotel-card').forEach(card => {
-//         card.classList.toggle('hidden', !card.getAttribute('data-search').includes(query));
-//     });
-// }
-
-// function setupNotifications() {
-//     const btn = document.getElementById('notifBtn');
-//     const menu = document.getElementById('notifMenu');
-
-//     if (btn && menu) {
-//         btn.onclick = (e) => {
-//             e.stopPropagation();
-//             const estOuvert = menu.classList.toggle('hidden');
-//             if (!estOuvert) chargerNotifications(); // On charge les notifs quand on ouvre
-//         };
-//         // Fermer le menu si on clique ailleurs
-//         document.addEventListener('click', () => menu.classList.add('hidden'));
-//     }
-// }
-
-// // ── 4.1 GESTION DU MODAL (OUVRIR / FERMER) ───────────────
-// function openModal() {
-//     const modal = document.getElementById('modal');
-//     if (modal) modal.classList.remove('hidden');
-// }
-
-// function closeModal() {
-//     const modal = document.getElementById('modal');
-//     if (modal) {
-//         modal.classList.add('hidden');
-//         // Optionnel : on vide le formulaire quand on ferme
-//         document.getElementById('addHotelForm')?.reset();
-//         document.getElementById('preview')?.classList.add('hidden');
-//     }
-// }
-
-// // ── 4.2 CHARGER LES VRAIES NOTIFICATIONS ────────────────
-// async function chargerNotifications() {
-//     const notifMenu = document.getElementById('notifMenu');
-//     const badge = document.querySelector('#notifBtn span');
-//     if (!notifMenu) return;
-
-//     try {
-//         const res = await fetch(`${API_HOTELS}/notifications`, {
-//             headers: { 'Authorization': `Bearer ${getToken()}` }
-//         });
-//         const notifications = await res.json();
-
-//         // Mise à jour du petit chiffre jaune
-//         if (badge) {
-//             badge.textContent = notifications.length;
-//             badge.classList.toggle('hidden', notifications.length === 0);
-//         }
-
-//         // Remplissage du menu blanc
-//         let html = '<div class="p-3 border-b font-bold text-xs">Notifications</div>';
-//         if (notifications.length === 0) {
-//             html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
-//         } else {
-//             notifications.forEach(n => {
-//                 html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p></div>`;
-//             });
-//         }
-//         notifMenu.innerHTML = html;
-//     } catch (e) { console.error("Erreur notifs:", e); }
-// }
-// // pour le Email de réinitialisation du mot de passe,
-// // ── FONCTION MOT DE PASSE OUBLIÉ (LIAISON BACKEND) ──
-// async function handleForgotPassword(event) {
-//     if (event) event.preventDefault();
-//     const emailInput = document.getElementById('email');
-//     if (!emailInput) return;
-    
-//     const email = emailInput.value.trim();
-
-//     try {
-//         const response = await fetch(`${API_AUTH}/forgot-password`, {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify({ email })
-//         });
-
-//         const data = await response.json();
-
-//         if (response.ok) {
-//             alert("✅ Accès passé : Un e-mail réel vient de vous être envoyé !");
-//             emailInput.value = ""; // On vide le champ
-//         } else {
-//             alert("❌ " + (data.message || "Message refusé"));
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         alert("Erreur : Le serveur ne répond pas.");
-//     }
-// }
-
-// // ============================================================
-// // 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
-// // ============================================================
-
-// // On utilise 'pageshow' pour que le code se relance même au clic sur "Retour"
-// window.addEventListener('pageshow', (event) => {
-//     const token = getToken();
-//     const path  = decodeURIComponent(window.location.pathname);
-    
-//     // Liste des pages autorisées sans badge
-//     const isPublic = path.includes('se connecté') || 
-//                      path.includes('inscription') || 
-//                      path.includes('mode pass oublie') || 
-//                      path.includes('reset');
-
-//     // 🛡️ 1. LE GARDIEN IMMÉDIAT (Éjection si pas de badge)
-//     if (!token && !isPublic) {
-//         window.location.replace('se connecté.html');
-//         return; 
-//     }
-
-//     // 🛡️ 2. VÉRIFICATION RÉELLE AVEC LE SERVEUR
-//     if (token && !isPublic) {
-//         verifierToken(token).then(valide => {
-//             if (!valide) {
-//                 // Si le serveur dit NON (ex: après une déconnexion) -> Éjection
-//                 seDeconnecter(); 
-//                 return;
-//             }
-//             // Si c'est bon, on affiche la page et on active les boutons
-//             finaliserInitialisation();
-//         });
-//     } else {
-//         // Page publique (Login/Reg) -> on affiche directement
-//         finaliserInitialisation();
-//     }
-// });
-
-// // ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
-// function finaliserInitialisation() {
-//     // 1. On montre la page
-//     document.body.style.setProperty('display', 'flex', 'important');
-
-//     // 2. Branchement des formulaires (Connexion, Inscription, etc.)
-//     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
-//     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
-//     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
-//     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
-
-//     // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
-//      const addForm = document.getElementById('addHotelForm');
-//     if (addForm) {
-//         addForm.addEventListener('submit', (e) => {
-//             e.preventDefault();
-//             addHotel(); // 🟢 Appelle la fonction d'envoi
-//         });
-//     }
-
-//     // 4. Chargement des données réelles
-//     if (document.getElementById('hotelsGrid')) chargerHotels();
-//     if (document.getElementById('statHotels')) chargerStatsDashboard();
-    
-//     // 5. Affichage du nom
-//     const savedName = localStorage.getItem('userName');
-//     const nameEl = document.getElementById('userNameDisplay');
-//     if (nameEl && savedName) nameEl.textContent = savedName;
-
-//     // 🟢 6. ACTIVER LA CLOCHE
-//     setupNotifications();
-// }
-
-
-
 // ============================================================
 // 1. CONFIGURATION ET CONSTANTES
 // ============================================================
@@ -542,47 +7,68 @@ const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';
 const getToken = () => localStorage.getItem('token');
 
 // ============================================================
-// 2. GESTION DES HÔTELS (MONGODB + CLOUDINARY)
+// 2. GESTION DES HÔTELS & STATISTIQUES
 // ============================================================
-
 async function chargerHotels() {
     const grid = document.getElementById('hotelsGrid');
     if (!grid) return;
+
     try {
+        // Envoi immédiat de la requête
         const response = await fetch(API_HOTELS, {
-            headers: { 'Authorization': `Bearer ${getToken()}` }
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
         });
+
         const hotels = await response.json();
-        if (response.status === 401) { seDeconnecter(); return; }
+
+        // Sécurité si la session a expiré
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.replace('se connecté.html');
+            return;
+        }
+
+        // Affichage instantané dès que les données arrivent
         if (Array.isArray(hotels)) {
             grid.innerHTML = ''; 
             hotels.forEach(hotel => ajouterCarteHotel(hotel));
+            
             const count = document.getElementById('hotelCount');
             if (count) count.textContent = hotels.length;
         }
-    } catch (err) { console.error('Erreur chargement:', err); }
+
+    } catch (err) {
+        console.error('Erreur chargement hôtels :', err);
+    }
 }
 
-async function addHotel() {
-    const formData = new FormData();
-    const photoFile = document.getElementById('photoInput').files[0];
-    const fields = ['newNom', 'newAdresse', 'newEmail', 'newTel', 'newPrix', 'newDevise'];
-    
-    for (let id of fields) {
-        const val = document.getElementById(id)?.value;
-        if (!val) { alert("Merci de remplir tous les champs"); return; }
-        formData.append(id.replace('new', '').toLowerCase(), val);
-    }
-    if (photoFile) formData.append('image', photoFile);
-
+async function chargerStatsDashboard() {
     try {
-        const res = await fetch(API_HOTELS, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${getToken()}` },
-            body: formData 
+        const response = await fetch(`${API_HOTELS}/stats/count`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        if (res.ok) window.location.reload();
+        if (!response.ok) return;
+        const stats = await response.json();
+        animerChiffre("statHotels", stats.hotels);
+        animerChiffre("statUsers", stats.users);
+        animerChiffre("statMessages", stats.messages);
+        animerChiffre("statEmails", stats.emails);
+        animerChiffre("statFormulaires", stats.formulaires);
+        animerChiffre("statEnquetes", stats.enquetes);
     } catch (e) { console.error(e); }
+}
+
+function animerChiffre(id, fin) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let debut = 0;
+    const timer = setInterval(() => {
+        debut += fin / 30;
+        if (debut >= fin) { el.textContent = fin; clearInterval(timer); }
+        else { el.textContent = Math.floor(debut); }
+    }, 30);
 }
 
 function ajouterCarteHotel(hotel) {
@@ -594,27 +80,161 @@ function ajouterCarteHotel(hotel) {
     card.className = 'hotel-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer relative';
     card.setAttribute('data-search', `${hotel.nom} ${hotel.adresse}`.toLowerCase());
     const deleteBtn = token ? `<button onclick="event.stopPropagation(); supprimerHotel('${hotel._id}')" class="absolute top-2 right-2 bg-red-600 hover:bg-red-800 text-white p-2 rounded-full shadow-lg transition-colors z-10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>` : "";
-    card.innerHTML = `<div class="overflow-hidden h-44 relative"><img src="${imgUrl}" class="w-full h-full object-cover" />${deleteBtn}</div><div class="p-4"><p class="text-[10px] text-orange-400 font-medium mb-0.5">${hotel.adresse}</p><h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3><p class="text-xs text-gray-600">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p></div>`;
+    card.innerHTML = `<div class="overflow-hidden h-44 relative"><img src="${imgUrl}" class="w-full h-full object-cover" />${deleteBtn}</div><div class="p-4"><p class="text-[10px] text-orange font-medium mb-0.5">${hotel.adresse}</p><h3 class="font-semibold text-gray-800 text-base mb-2">${hotel.nom}</h3><p class="text-xs text-gray-600">${hotel.prix} ${hotel.devise} <span class="text-xs">par nuit</span></p></div>`;
     grid.appendChild(card);
 }
 
+// ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
+async function addHotel() {
+    const submitBtn = document.querySelector('#addHotelForm button[type="submit"]');
+    
+    // 🟢 SÉCURITÉ : Si le bouton est déjà désactivé, on arrête tout (empêche le double envoi)
+    if (submitBtn.disabled) return;
+
+    const formData = new FormData();
+    const photoFile = document.getElementById('photoInput').files[0];
+    
+    const nom     = document.getElementById('newNom').value;
+    const adresse = document.getElementById('newAdresse').value;
+    const email   = document.getElementById('newEmail').value;
+    const tel     = document.getElementById('newTel').value;
+    const prix    = document.getElementById('newPrix').value;
+    const devise  = document.getElementById('newDevise').value;
+
+    if (!nom || !adresse || !prix || !photoFile) {
+        alert("Merci de remplir tous les champs et d'ajouter une photo.");
+        return;
+    }
+
+    // 🟢 ON BLOQUE LE BOUTON IMMÉDIATEMENT
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enregistrement...";
+
+    formData.append('nom', nom);
+    formData.append('adresse', adresse);
+    formData.append('email', email);
+    formData.append('tel', tel);
+    formData.append('prix', prix);
+    formData.append('devise', devise);
+    formData.append('image', photoFile);
+
+    try {
+        const response = await fetch(API_HOTELS, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: formData 
+        });
+
+        if (response.ok) {
+            // Pas d'alerte, on recharge tout de suite
+            window.location.reload(); 
+        } else {
+            // En cas d'erreur, on redonne la main au bouton
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Enregistrer";
+            alert("Erreur lors de l'enregistrement.");
+        }
+    } catch (error) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Enregistrer";
+        console.error(error);
+    }
+}
+
+
+// ── SUPPRESSION AUTOMATIQUE (SANS BOUTON OK) ──────────────
+async function supprimerHotel(id) {
+    try {
+        const response = await fetch(`${API_HOTELS}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (response.ok) {
+            // 🟢 ÉTAPE 1 : On cherche la carte par son ID et on l'efface de l'écran
+            const card = document.getElementById(`hotel-${id}`);
+            if (card) {
+                card.remove(); // Supprime l'élément HTML sans recharger
+            }
+            
+            // 🟢 ÉTAPE 2 : On recharge les données en arrière-plan pour le compteur
+            chargerHotels(); 
+            
+            console.log("Hôtel supprimé de l'écran");
+        }
+    } catch (error) { console.error(error); }
+}
+
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('preview');
+    const placeholder = document.getElementById('uploadPlaceholder');
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = () => { 
+            if(preview) {
+                preview.src = reader.result; 
+                preview.classList.remove('hidden');
+                if(placeholder) placeholder.classList.add('hidden'); // Cache l'icône +
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
 // ============================================================
-// 3. AUTHENTIFICATION (LOGIN, REGISTER, LOGOUT, EMAIL)
+// 3. AUTHENTIFICATION
 // ============================================================
 
 async function seConnecter(event) {
     event.preventDefault();
+    
+    // Récupération des éléments du bouton pour l'animation
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+
+    // Activer le chargement
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        spinner?.classList.remove('hidden');
+        if (btnText) btnText.textContent = "Connexion...";
+    }
+
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+
     try {
-        const res = await fetch(`${API_AUTH}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        const res = await fetch(`${API_AUTH}/login`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ email, password }) 
+        });
+        
         const data = await res.json();
+        
         if (res.ok) { 
             localStorage.setItem('token', data.token); 
             if(data.user) localStorage.setItem('userName', data.user.nom);
             window.location.replace('dashweb.html'); 
-        } else { alert("❌ " + data.message); }
-    } catch (e) { alert("Erreur serveur"); }
+        } else { 
+            alert("❌ " + data.message); 
+            // Remettre le bouton à zéro
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                spinner?.classList.add('hidden');
+                if (btnText) btnText.textContent = "Se connecter";
+            }
+        }
+    } catch (e) { 
+        alert("Erreur serveur : vérifiez votre connexion."); 
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            spinner?.classList.add('hidden');
+            if (btnText) btnText.textContent = "Se connecter";
+        }
+    }
 }
 
 async function handleRegister(event) {
@@ -623,118 +243,321 @@ async function handleRegister(event) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     try {
-        const res = await fetch(`${API_AUTH}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, email, password }) });
-        if (res.ok) { alert("✅ Inscription réussie !"); window.location.replace('se connecté.html'); }
-        else { alert("❌ Erreur d'inscription"); }
+        const res = await fetch(`${API_AUTH}/register`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ nom, email, password }) 
+        });
+        if (res.ok) { 
+            alert("✅ Inscription réussie !"); 
+            window.location.replace('se connecté.html'); 
+        } else { alert("❌ Erreur lors de l'inscription"); }
     } catch (e) { alert("Erreur serveur"); }
 }
 
-// 🟢 NOUVEAU : FONCTION MOT DE PASSE OUBLIÉ (RÉEL)
-async function handleForgotPassword(event) {
-    event.preventDefault();
-    const emailInput = document.getElementById('email');
-    const submitBtn = event.target.querySelector('button');
+
+
+// verification du token en arrière-plan pour les pages privées
+async function verifierToken(token) {
+    try {
+        const response = await fetch(`${API_AUTH}/verify`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        // 🟢 ON N'ÉJECTE QUE SI LE SERVEUR RÉPOND "401 UNAUTHORIZED" (Vrai refus)
+        if (response.status === 401) {
+            return false;
+        }
+
+        // Pour tous les autres cas (200 OK ou Serveur en train de dormir)
+        // On renvoie "true" pour laisser l'utilisateur tranquille
+        return true; 
+
+    } catch (e) {
+        // Si le réseau plante ou que Render dort, on ne bloque pas l'utilisateur
+        console.warn("Le serveur est lent, attente du réveil...");
+        return true; 
+    }
+}
+
+function seDeconnecter(event) {
+    if (event) event.preventDefault();
+    
+    // 1. On vide TOUTE la mémoire (Token et Nom)
+    localStorage.clear(); 
+    
+    // 2. On remplace la page actuelle dans l'historique par le login
+    // Cela empêche physiquement de faire "Retour" vers le Dashboard
+    window.location.replace('se connecté.html'); 
+}
+
+// ============================================================
+// 4. UI HELPERS
+// ============================================================
+// ── OUVRIR LE MENU MOBILE (HAMBURGER) ──
+function ouvrirMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    }
+}
+
+// ── FERMER LE MENU MOBILE ──
+function fermerMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
+}
+
+// ── AFFICHER LA BARRE DE RECHERCHE MOBILE ──
+function toggleSearchMobile() {
+    const searchBar = document.getElementById('searchMobile');
+    if (searchBar) {
+        searchBar.classList.toggle('hidden');
+    }
+}
+
+function togglePassword() {
+    const input = document.getElementById('password');
+    if (input) input.type = (input.type === 'password') ? 'text' : 'password';
+}
+
+function filterHotels() {
+    const query = document.getElementById('searchInput')?.value.toLowerCase() || "";
+    document.querySelectorAll('.hotel-card').forEach(card => {
+        card.classList.toggle('hidden', !card.getAttribute('data-search').includes(query));
+    });
+}
+
+function setupNotifications() {
+    const btn = document.getElementById('notifBtn');
+    const menu = document.getElementById('notifMenu');
+
+    if (btn && menu) {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const estOuvert = menu.classList.toggle('hidden');
+            if (!estOuvert) chargerNotifications(); // On charge les notifs quand on ouvre
+        };
+        // Fermer le menu si on clique ailleurs
+        document.addEventListener('click', () => menu.classList.add('hidden'));
+    }
+}
+
+// ── 4.1 GESTION DU MODAL (OUVRIR / FERMER) ───────────────
+function openModal() {
+    const modal = document.getElementById('modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        // Optionnel : on vide le formulaire quand on ferme
+        document.getElementById('addHotelForm')?.reset();
+        document.getElementById('preview')?.classList.add('hidden');
+    }
+}
+
+// ── 4.2 CHARGER LES VRAIES NOTIFICATIONS ────────────────
+async function chargerNotifications() {
+    const notifMenu = document.getElementById('notifMenu');
+    const badge = document.querySelector('#notifBtn span');
+    if (!notifMenu) return;
 
     try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Envoi en cours...";
+        const res = await fetch(`${API_HOTELS}/notifications`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const notifications = await res.json();
 
+        // Mise à jour du petit chiffre jaune
+        if (badge) {
+            badge.textContent = notifications.length;
+            badge.classList.toggle('hidden', notifications.length === 0);
+        }
+
+        // Remplissage du menu blanc
+        let html = '<div class="p-3 border-b font-bold text-xs">Notifications</div>';
+        if (notifications.length === 0) {
+            html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
+        } else {
+            notifications.forEach(n => {
+                html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p></div>`;
+            });
+        }
+        notifMenu.innerHTML = html;
+    } catch (e) { console.error("Erreur notifs:", e); }
+}
+// pour le Email de réinitialisation du mot de passe,
+// ── FONCTION MOT DE PASSE OUBLIÉ (LIAISON BACKEND) ──
+async function handleForgotPassword(event) {
+    if (event) event.preventDefault();
+    const emailInput = document.getElementById('email');
+    if (!emailInput) return;
+    
+    const email = emailInput.value.trim();
+
+    try {
         const response = await fetch(`${API_AUTH}/forgot-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailInput.value.trim() })
+            body: JSON.stringify({ email })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            alert("✅ " + data.message); // Affiche "Accès passé"
-            emailInput.value = ""; // ON VIDE LE CHAMP
+            alert("✅ Accès passé : Un e-mail réel vient de vous être envoyé !");
+            emailInput.value = ""; // On vide le champ
         } else {
-            alert("❌ " + data.message); // Affiche "Message refusé"
+            alert("❌ " + (data.message || "Message refusé"));
         }
     } catch (error) {
-        alert("Erreur de connexion au serveur.");
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Envoyer";
+        console.error(error);
+        alert("Erreur : Le serveur ne répond pas.");
     }
 }
 
+// ── RÉINITIALISATION DU MOT DE PASSE ─────────────────────
 async function handleResetPassword(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
+
+    // ÉTAPE 1 — Récupère le token depuis l'URL
+    // L'URL doit ressembler à : reset-password.html?token=abc123
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const password = document.getElementById('newPassword').value;
-    const res = await fetch(`${API_AUTH}/reset-password/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
-    if (res.ok) { alert("✅ Mot de passe modifié !"); window.location.replace('se connecté.html'); }
-    else { alert("Lien expiré"); }
-}
+    const token     = urlParams.get('token');
 
-async function verifierToken(token) {
-    try {
-        const res = await fetch(`${API_AUTH}/verify`, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
-        return res.ok; 
-    } catch (e) { return false; }
-}
+    console.log("Token dans URL :", token); // Pour débugger
 
-function seDeconnecter() {
-    localStorage.clear();
-    window.location.replace('se connecté.html');
-}
-
-// ============================================================
-// 4. UI HELPERS & INITIALISATION
-// ============================================================
-
-function setupNotifications() {
-    const btn = document.getElementById('notifBtn');
-    const menu = document.getElementById('notifMenu');
-    if (btn && menu) {
-        btn.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('hidden'); chargerNotifications(); };
-        document.addEventListener('click', () => menu.classList.add('hidden'));
-    }
-}
-
-window.addEventListener('pageshow', (event) => {
-    const token = getToken();
-    const path  = decodeURIComponent(window.location.pathname);
-    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('mode pass oublie') || path.includes('reset');
-
-    if (!token && !isPublic) {
-        window.location.replace('se connecté.html');
+    // ÉTAPE 2 — Vérifie que le token existe
+    if (!token) {
+        alert("❌ Lien invalide ! Token manquant dans l'URL.");
         return;
     }
 
+    // ÉTAPE 3 — Récupère les deux mots de passe
+    const password = document.getElementById('newPassword')?.value;
+    const confirm  = document.getElementById('confirmPassword')?.value;
+
+    // ÉTAPE 4 — Vérifie qu'ils correspondent
+    if (!password || !confirm) {
+        alert("❌ Veuillez remplir les deux champs.");
+        return;
+    }
+
+    if (password !== confirm) {
+        alert("❌ Les mots de passe ne correspondent pas !");
+        return;
+    }
+
+    if (password.length < 6) {
+        alert("❌ Le mot de passe doit contenir au moins 6 caractères.");
+        return;
+    }
+
+    // ÉTAPE 5 — Envoie au serveur
+    try {
+        const response = await fetch(
+            `${API_AUTH}/reset-password/${token}`,
+            {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ password })
+            }
+        );
+
+        const data = await response.json();
+        console.log("Réponse serveur :", data);
+
+        if (response.ok) {
+            alert("✅ " + data.message);
+            window.location.replace('se connecté.html');
+        } else {
+            alert("❌ " + (data.message || "Lien invalide ou expiré."));
+        }
+
+    } catch (error) {
+        console.error("Erreur réseau :", error);
+        alert("❌ Erreur de connexion au serveur.");
+    }
+}
+
+// ============================================================
+// 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
+// ============================================================
+
+// On utilise 'pageshow' pour que le code se relance même au clic sur "Retour"
+window.addEventListener('pageshow', (event) => {
+    const token = getToken();
+    const path  = decodeURIComponent(window.location.pathname);
+    
+    // Liste des pages autorisées sans badge
+    const isPublic = path.includes('se connecté') || 
+                     path.includes('inscription') || 
+                     path.includes('mode pass oublie') || 
+                     path.includes('reset');
+
+    // 🛡️ 1. LE GARDIEN IMMÉDIAT (Éjection si pas de badge)
+    if (!token && !isPublic) {
+        window.location.replace('se connecté.html');
+        return; 
+    }
+
+    // 🛡️ 2. VÉRIFICATION RÉELLE AVEC LE SERVEUR
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
-            if (!valide) { seDeconnecter(); return; }
-            document.body.style.display = 'flex'; 
+            if (!valide) {
+                // Si le serveur dit NON (ex: après une déconnexion) -> Éjection
+                seDeconnecter(); 
+                return;
+            }
+            // Si c'est bon, on affiche la page et on active les boutons
             finaliserInitialisation();
         });
     } else {
-        document.body.style.display = 'flex'; 
+        // Page publique (Login/Reg) -> on affiche directement
         finaliserInitialisation();
     }
 });
 
+// ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
 function finaliserInitialisation() {
+    // 1. On montre la page
     document.body.style.setProperty('display', 'flex', 'important');
 
+    // 2. Branchement des formulaires (Connexion, Inscription, etc.)
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
 
-    const addForm = document.getElementById('addHotelForm');
-    if (addForm) addForm.addEventListener('submit', (e) => { e.preventDefault(); addHotel(); });
+    // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
+     const addForm = document.getElementById('addHotelForm');
+    if (addForm) {
+        addForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addHotel(); // 🟢 Appelle la fonction d'envoi
+        });
+    }
 
+    // 4. Chargement des données réelles
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
+    // 5. Affichage du nom
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
 
+    // 🟢 6. ACTIVER LA CLOCHE
     setupNotifications();
 }
+
