@@ -142,36 +142,27 @@ async function addHotel() {
 }
 
 
-// ── FONCTION POUR SUPPRIMER UN HÔTEL DIRECTEMENT ──────────
 // ── SUPPRESSION AUTOMATIQUE (SANS BOUTON OK) ──────────────
 async function supprimerHotel(id) {
     try {
         const response = await fetch(`${API_HOTELS}/${id}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`
-            }
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
 
         if (response.ok) {
-            // 1. On retire la carte de l'écran avec un petit effet fluide
+            // 🟢 ÉTAPE 1 : On cherche la carte par son ID et on l'efface de l'écran
             const card = document.getElementById(`hotel-${id}`);
             if (card) {
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.9)';
-                card.style.transition = '0.3s';
-                setTimeout(() => card.remove(), 300);
+                card.remove(); // Supprime l'élément HTML sans recharger
             }
             
-            // 2. On met à jour le compteur d'hôtels en haut
+            // 🟢 ÉTAPE 2 : On recharge les données en arrière-plan pour le compteur
             chargerHotels(); 
-
-            // 🟢 NOTE : On ne met plus d'alert() ici pour ne pas bloquer l'utilisateur.
-            console.log("Hôtel supprimé avec succès.");
+            
+            console.log("Hôtel supprimé de l'écran");
         }
-    } catch (error) {
-        console.error("Erreur suppression:", error);
-    }
+    } catch (error) { console.error(error); }
 }
 
 function previewPhoto(event) {
@@ -375,6 +366,34 @@ async function chargerNotifications() {
         }
         notifMenu.innerHTML = html;
     } catch (e) { console.error("Erreur notifs:", e); }
+}
+
+// ── OUVRIR LE MENU MOBILE (HAMBURGER) ──
+function ouvrirMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    }
+}
+
+// ── FERMER LE MENU MOBILE ──
+function fermerMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
+}
+
+// ── AFFICHER LA BARRE DE RECHERCHE MOBILE ──
+function toggleSearchMobile() {
+    const searchBar = document.getElementById('searchMobile');
+    if (searchBar) {
+        searchBar.classList.toggle('hidden');
+    }
 }
 // ============================================================
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
