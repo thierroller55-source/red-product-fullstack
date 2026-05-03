@@ -86,45 +86,38 @@ function ajouterCarteHotel(hotel) {
 
 // ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
 async function addHotel() {
-    // 1. On récupère le bouton pour changer son état
     const submitBtn = document.querySelector('#addHotelForm button[type="submit"]');
-    const originalText = submitBtn.textContent;
+    if (submitBtn.disabled) return; // Sécurité anti-double clic
 
     const formData = new FormData();
     const photoFile = document.getElementById('photoInput').files[0];
     
-    const nom     = document.getElementById('newNom').value;
+    // Récupération des données
+    const nom = document.getElementById('newNom').value;
     const adresse = document.getElementById('newAdresse').value;
-    const email   = document.getElementById('newEmail').value;
-    const tel     = document.getElementById('newTel').value;
-    const prix    = document.getElementById('newPrix').value;
-    const devise  = document.getElementById('newDevise').value;
+    const email = document.getElementById('newEmail').value;
+    const tel = document.getElementById('newTel').value;
+    const prix = document.getElementById('newPrix').value;
+    const devise = document.getElementById('newDevise').value;
 
-    if (!nom || !adresse || !prix || !photoFile) {
-        alert("Merci de remplir tous les champs et d'ajouter une photo.");
+    if (!nom || !adresse || !prix) {
+        alert("Champs obligatoires manquants");
         return;
     }
 
-    // On remplit le FormData
+    // Blocage immédiat du bouton pour éviter le doublon
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Chargement...";
+
     formData.append('nom', nom);
     formData.append('adresse', adresse);
     formData.append('email', email);
     formData.append('tel', tel);
     formData.append('prix', prix);
     formData.append('devise', devise);
-    formData.append('image', photoFile);
+    if (photoFile) formData.append('image', photoFile);
 
     try {
-        // 🟢 ANIMATION : On bloque le bouton et on change le texte
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <svg class="animate-spin h-4 w-4 text-white inline mr-2" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-            Envoi en cours...
-        `;
-
         const response = await fetch(API_HOTELS, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${getToken()}` },
@@ -132,19 +125,17 @@ async function addHotel() {
         });
 
         if (response.ok) {
-            alert("✅ Hôtel et photo enregistrés avec succès !");
+            // 🟢 PLUS D'ALERTE ICI : On recharge la page directement
+            // L'utilisateur verra son hôtel apparaître sans avoir à cliquer sur "OK"
             window.location.reload(); 
         } else {
-            const data = await response.json();
-            alert("❌ Erreur : " + data.message);
             submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            submitBtn.textContent = "Enregistrer";
+            alert("Erreur serveur");
         }
-
     } catch (error) {
-        alert("Erreur de connexion au serveur.");
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        console.error(error);
     }
 }
 
