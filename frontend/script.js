@@ -266,6 +266,52 @@ function setupNotifications() {
     }
 }
 
+// ── 4.1 GESTION DU MODAL (OUVRIR / FERMER) ───────────────
+function openModal() {
+    const modal = document.getElementById('modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        // Optionnel : on vide le formulaire quand on ferme
+        document.getElementById('addHotelForm')?.reset();
+        document.getElementById('preview')?.classList.add('hidden');
+    }
+}
+
+// ── 4.2 CHARGER LES VRAIES NOTIFICATIONS ────────────────
+async function chargerNotifications() {
+    const notifMenu = document.getElementById('notifMenu');
+    const badge = document.querySelector('#notifBtn span');
+    if (!notifMenu) return;
+
+    try {
+        const res = await fetch(`${API_HOTELS}/notifications`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const notifications = await res.json();
+
+        // Mise à jour du petit chiffre jaune
+        if (badge) {
+            badge.textContent = notifications.length;
+            badge.classList.toggle('hidden', notifications.length === 0);
+        }
+
+        // Remplissage du menu blanc
+        let html = '<div class="p-3 border-b font-bold text-xs">Notifications</div>';
+        if (notifications.length === 0) {
+            html += '<p class="p-4 text-[10px] text-gray-400 text-center italic">Aucun message</p>';
+        } else {
+            notifications.forEach(n => {
+                html += `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer"><p class="text-[11px] text-gray-800 font-medium">${n.message}</p></div>`;
+            });
+        }
+        notifMenu.innerHTML = html;
+    } catch (e) { console.error("Erreur notifs:", e); }
+}
 // ============================================================
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
 // ============================================================
@@ -316,12 +362,11 @@ function finaliserInitialisation() {
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
 
     // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
-    const addForm = document.getElementById('addHotelForm');
+     const addForm = document.getElementById('addHotelForm');
     if (addForm) {
-        console.log("Formulaire d'ajout détecté");
         addForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            addHotel(); // Appelle ta fonction d'envoi vers Cloudinary
+            addHotel(); // 🟢 Appelle la fonction d'envoi
         });
     }
 
