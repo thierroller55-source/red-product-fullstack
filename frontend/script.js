@@ -87,27 +87,28 @@ function ajouterCarteHotel(hotel) {
 // ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
 async function addHotel() {
     const submitBtn = document.querySelector('#addHotelForm button[type="submit"]');
-    if (submitBtn.disabled) return; // Sécurité anti-double clic
+    
+    // 🟢 SÉCURITÉ : Si le bouton est déjà désactivé, on arrête tout (empêche le double envoi)
+    if (submitBtn.disabled) return;
 
     const formData = new FormData();
     const photoFile = document.getElementById('photoInput').files[0];
     
-    // Récupération des données
-    const nom = document.getElementById('newNom').value;
+    const nom     = document.getElementById('newNom').value;
     const adresse = document.getElementById('newAdresse').value;
-    const email = document.getElementById('newEmail').value;
-    const tel = document.getElementById('newTel').value;
-    const prix = document.getElementById('newPrix').value;
-    const devise = document.getElementById('newDevise').value;
+    const email   = document.getElementById('newEmail').value;
+    const tel     = document.getElementById('newTel').value;
+    const prix    = document.getElementById('newPrix').value;
+    const devise  = document.getElementById('newDevise').value;
 
-    if (!nom || !adresse || !prix) {
-        alert("Champs obligatoires manquants");
+    if (!nom || !adresse || !prix || !photoFile) {
+        alert("Merci de remplir tous les champs et d'ajouter une photo.");
         return;
     }
 
-    // Blocage immédiat du bouton pour éviter le doublon
+    // 🟢 ON BLOQUE LE BOUTON IMMÉDIATEMENT
     submitBtn.disabled = true;
-    submitBtn.textContent = "Chargement...";
+    submitBtn.textContent = "Enregistrement...";
 
     formData.append('nom', nom);
     formData.append('adresse', adresse);
@@ -115,7 +116,7 @@ async function addHotel() {
     formData.append('tel', tel);
     formData.append('prix', prix);
     formData.append('devise', devise);
-    if (photoFile) formData.append('image', photoFile);
+    formData.append('image', photoFile);
 
     try {
         const response = await fetch(API_HOTELS, {
@@ -125,27 +126,26 @@ async function addHotel() {
         });
 
         if (response.ok) {
-            // 🟢 PLUS D'ALERTE ICI : On recharge la page directement
-            // L'utilisateur verra son hôtel apparaître sans avoir à cliquer sur "OK"
+            // Pas d'alerte, on recharge tout de suite
             window.location.reload(); 
         } else {
+            // En cas d'erreur, on redonne la main au bouton
             submitBtn.disabled = false;
             submitBtn.textContent = "Enregistrer";
-            alert("Erreur serveur");
+            alert("Erreur lors de l'enregistrement.");
         }
     } catch (error) {
         submitBtn.disabled = false;
+        submitBtn.textContent = "Enregistrer";
         console.error(error);
     }
 }
 
 
 // ── FONCTION POUR SUPPRIMER UN HÔTEL DIRECTEMENT ──────────
+// ── SUPPRESSION AUTOMATIQUE (SANS BOUTON OK) ──────────────
 async function supprimerHotel(id) {
-    // 🟢 On a enlevé la ligne "if (!confirm...)"
-    
     try {
-        // 1. Envoyer la demande au serveur Render
         const response = await fetch(`${API_HOTELS}/${id}`, {
             method: 'DELETE',
             headers: {
@@ -154,22 +154,23 @@ async function supprimerHotel(id) {
         });
 
         if (response.ok) {
-            // 2. Si le serveur dit OK, on retire la carte de l'écran immédiatement
+            // 1. On retire la carte de l'écran avec un petit effet fluide
             const card = document.getElementById(`hotel-${id}`);
-            if (card) card.remove();
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                card.style.transition = '0.3s';
+                setTimeout(() => card.remove(), 300);
+            }
             
-            // On rafraîchit les données pour mettre à jour le compteur
+            // 2. On met à jour le compteur d'hôtels en haut
             chargerHotels(); 
-            
-            // 🟢 Le message s'affiche directement après
-            alert("✅ Hôtel supprimé avec succès.");
-        } else {
-            const data = await response.json();
-            alert("❌ Erreur : " + (data.message || "Action impossible"));
+
+            // 🟢 NOTE : On ne met plus d'alert() ici pour ne pas bloquer l'utilisateur.
+            console.log("Hôtel supprimé avec succès.");
         }
     } catch (error) {
         console.error("Erreur suppression:", error);
-        alert("Impossible de contacter le serveur Render.");
     }
 }
 
