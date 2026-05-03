@@ -3,11 +3,10 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true, // Utilisation de SSL pour plus de sécurité sur Render
+  secure: true, // Utilisation de SSL pour Gmail
   auth: {
-    // 🟢 On utilise les variables que tu as déjà créées sur Render
-    user: process.env.MAIL_USER, 
-    pass: process.env.MAIL_PASS  
+    user: process.env.MAIL_USER, // thierroller55@gmail.com
+    pass: process.env.MAIL_PASS  // Ton code de 16 lettres Google
   }
 });
 

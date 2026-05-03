@@ -394,7 +394,35 @@ async function chargerNotifications() {
         notifMenu.innerHTML = html;
     } catch (e) { console.error("Erreur notifs:", e); }
 }
+// pour le Email de réinitialisation du mot de passe,
+// ── FONCTION MOT DE PASSE OUBLIÉ (LIAISON BACKEND) ──
+async function handleForgotPassword(event) {
+    if (event) event.preventDefault();
+    const emailInput = document.getElementById('email');
+    if (!emailInput) return;
+    
+    const email = emailInput.value.trim();
 
+    try {
+        const response = await fetch(`${API_AUTH}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ Accès passé : Un e-mail réel vient de vous être envoyé !");
+            emailInput.value = ""; // On vide le champ
+        } else {
+            alert("❌ " + (data.message || "Message refusé"));
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Erreur : Le serveur ne répond pas.");
+    }
+}
 
 // ============================================================
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
