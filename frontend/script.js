@@ -255,6 +255,42 @@ async function handleRegister(event) {
     } catch (e) { alert("Erreur serveur"); }
 }
 
+async function handleForgotPassword(event) {
+    if(event) event.preventDefault();
+    
+    const emailInput = document.getElementById('email');
+    const submitBtn = event.target.querySelector('button'); // On récupère le bouton
+    
+    if (!emailInput.value) return alert("Merci de taper votre e-mail");
+
+    try {
+        // 🟢 ON MONTRE QUE ÇA TRAVAILLE
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Envoi en cours...";
+
+        const response = await fetch(`${API_AUTH}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailInput.value.trim() })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ " + data.message);
+            emailInput.value = ""; // Vide le champ
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (error) {
+        alert("Erreur : Le serveur Render met trop de temps à répondre.");
+    } finally {
+        // On remet le bouton normal
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Envoyer";
+    }
+}
+
 // verification du token en arrière-plan pour les pages privées
 async function verifierToken(token) {
     try {
@@ -429,68 +465,47 @@ async function handleForgotPassword(event) {
 // ============================================================
 
 // On utilise 'pageshow' pour que le code se relance même au clic sur "Retour"
+// 
+
 window.addEventListener('pageshow', (event) => {
     const token = getToken();
     const path  = decodeURIComponent(window.location.pathname);
-    
-    // Liste des pages autorisées sans badge
-    const isPublic = path.includes('se connecté') || 
-                     path.includes('inscription') || 
-                     path.includes('mode pass oublie') || 
-                     path.includes('reset');
+    const isPublic = path.includes('se connecté') || path.includes('inscription') || path.includes('mode pass oublie') || path.includes('reset');
 
-    // 🛡️ 1. LE GARDIEN IMMÉDIAT (Éjection si pas de badge)
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
-        return; 
+        return;
     }
 
-    // 🛡️ 2. VÉRIFICATION RÉELLE AVEC LE SERVEUR
     if (token && !isPublic) {
         verifierToken(token).then(valide => {
-            if (!valide) {
-                // Si le serveur dit NON (ex: après une déconnexion) -> Éjection
-                seDeconnecter(); 
-                return;
-            }
-            // Si c'est bon, on affiche la page et on active les boutons
+            if (!valide) { seDeconnecter(); return; }
+            document.body.style.display = 'flex'; 
             finaliserInitialisation();
         });
     } else {
-        // Page publique (Login/Reg) -> on affiche directement
+        document.body.style.display = 'flex'; 
         finaliserInitialisation();
     }
 });
 
-// ── FONCTION POUR ACTIVER TOUT LE SITE ───────────────────
 function finaliserInitialisation() {
-    // 1. On montre la page
     document.body.style.setProperty('display', 'flex', 'important');
 
-    // 2. Branchement des formulaires (Connexion, Inscription, etc.)
     document.getElementById('loginForm')?.addEventListener('submit', seConnecter);
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
 
-    // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
-     const addForm = document.getElementById('addHotelForm');
-    if (addForm) {
-        addForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            addHotel(); // 🟢 Appelle la fonction d'envoi
-        });
-    }
+    const addForm = document.getElementById('addHotelForm');
+    if (addForm) addForm.addEventListener('submit', (e) => { e.preventDefault(); addHotel(); });
 
-    // 4. Chargement des données réelles
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
     
-    // 5. Affichage du nom
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
 
-    // 🟢 6. ACTIVER LA CLOCHE
     setupNotifications();
 }
