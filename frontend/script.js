@@ -293,6 +293,33 @@ function seDeconnecter(event) {
 // ============================================================
 // 4. UI HELPERS
 // ============================================================
+// ── OUVRIR LE MENU MOBILE (HAMBURGER) ──
+function ouvrirMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    }
+}
+
+// ── FERMER LE MENU MOBILE ──
+function fermerMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar && overlay) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
+}
+
+// ── AFFICHER LA BARRE DE RECHERCHE MOBILE ──
+function toggleSearchMobile() {
+    const searchBar = document.getElementById('searchMobile');
+    if (searchBar) {
+        searchBar.classList.toggle('hidden');
+    }
+}
 
 function togglePassword() {
     const input = document.getElementById('password');
@@ -368,33 +395,7 @@ async function chargerNotifications() {
     } catch (e) { console.error("Erreur notifs:", e); }
 }
 
-// ── OUVRIR LE MENU MOBILE (HAMBURGER) ──
-function ouvrirMenu() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    if (sidebar && overlay) {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-    }
-}
 
-// ── FERMER LE MENU MOBILE ──
-function fermerMenu() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    if (sidebar && overlay) {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-    }
-}
-
-// ── AFFICHER LA BARRE DE RECHERCHE MOBILE ──
-function toggleSearchMobile() {
-    const searchBar = document.getElementById('searchMobile');
-    if (searchBar) {
-        searchBar.classList.toggle('hidden');
-    }
-}
 // ============================================================
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
 // ============================================================
