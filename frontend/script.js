@@ -148,28 +148,29 @@ async function addHotel() {
     }
 }
 
-// ── FONCTION POUR SUPPRIMER UN HÔTEL ──────────────────────
-async function supprimerHotel(id) {
-    // 1. Demander confirmation à l'utilisateur
-    if (!confirm("Voulez-vous vraiment supprimer cet hôtel ?")) return;
 
+// ── FONCTION POUR SUPPRIMER UN HÔTEL DIRECTEMENT ──────────
+async function supprimerHotel(id) {
+    // 🟢 On a enlevé la ligne "if (!confirm...)"
+    
     try {
-        // 2. Envoyer la demande au serveur Render
+        // 1. Envoyer la demande au serveur Render
         const response = await fetch(`${API_HOTELS}/${id}`, {
             method: 'DELETE',
             headers: {
-                // On envoie le badge (Token) pour prouver qu'on est l'admin
                 'Authorization': `Bearer ${getToken()}`
             }
         });
 
         if (response.ok) {
-            // 3. Si le serveur dit OK, on retire la carte de l'écran immédiatement
+            // 2. Si le serveur dit OK, on retire la carte de l'écran immédiatement
             const card = document.getElementById(`hotel-${id}`);
             if (card) card.remove();
             
             // On rafraîchit les données pour mettre à jour le compteur
             chargerHotels(); 
+            
+            // 🟢 Le message s'affiche directement après
             alert("✅ Hôtel supprimé avec succès.");
         } else {
             const data = await response.json();
