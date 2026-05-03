@@ -9,23 +9,31 @@ const getToken = () => localStorage.getItem('token');
 // ============================================================
 // 2. GESTION DES HÔTELS & STATISTIQUES
 // ============================================================
-
 async function chargerHotels() {
     const grid = document.getElementById('hotelsGrid');
+    const loader = document.getElementById('pageLoader'); // On récupère le loader de page
     if (!grid) return;
+
     try {
         const response = await fetch(API_HOTELS, {
             headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         const hotels = await response.json();
-        if (response.status === 401) { seDeconnecter(); return; }
+
+        // 🟢 ANIMATION : On cache le loader une fois que les données sont là
+        if (loader) {
+            loader.classList.add('opacity-0');
+            setTimeout(() => loader.remove(), 500); // On le retire du code après 0.5s
+        }
+
         if (Array.isArray(hotels)) {
             grid.innerHTML = ''; 
             hotels.forEach(hotel => ajouterCarteHotel(hotel));
-            const count = document.getElementById('hotelCount');
-            if (count) count.textContent = hotels.length;
         }
-    } catch (err) { console.error('Erreur hotels:', err); }
+    } catch (err) { 
+        if (loader) loader.remove();
+        console.error(err); 
+    }
 }
 
 async function chargerStatsDashboard() {
@@ -70,12 +78,13 @@ function ajouterCarteHotel(hotel) {
 
 // ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
 async function addHotel() {
-    const formData = new FormData(); // Obligatoire pour envoyer une photo
+    // 1. On récupère le bouton pour changer son état
+    const submitBtn = document.querySelector('#addHotelForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
 
-    // 1. On récupère le fichier image depuis ton HTML
+    const formData = new FormData();
     const photoFile = document.getElementById('photoInput').files[0];
     
-    // 2. On récupère les textes du formulaire
     const nom     = document.getElementById('newNom').value;
     const adresse = document.getElementById('newAdresse').value;
     const email   = document.getElementById('newEmail').value;
@@ -83,48 +92,51 @@ async function addHotel() {
     const prix    = document.getElementById('newPrix').value;
     const devise  = document.getElementById('newDevise').value;
 
-    // Petite sécurité : on vérifie que les champs essentiels ne sont pas vides
-    if (!nom || !adresse || !prix) {
-        alert("Merci de remplir au moins le nom, l'adresse et le prix.");
+    if (!nom || !adresse || !prix || !photoFile) {
+        alert("Merci de remplir tous les champs et d'ajouter une photo.");
         return;
     }
 
-    // 3. On remplit le "paquet" (FormData) à envoyer
+    // On remplit le FormData
     formData.append('nom', nom);
     formData.append('adresse', adresse);
     formData.append('email', email);
     formData.append('tel', tel);
     formData.append('prix', prix);
     formData.append('devise', devise);
-    
-    if (photoFile) {
-        formData.append('image', photoFile); // Le mot 'image' doit correspondre au backend
-    }
+    formData.append('image', photoFile);
 
     try {
-        // 4. ON ENVOIE AU SERVEUR RENDER
+        // 🟢 ANIMATION : On bloque le bouton et on change le texte
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <svg class="animate-spin h-4 w-4 text-white inline mr-2" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            Envoi en cours...
+        `;
+
         const response = await fetch(API_HOTELS, {
             method: 'POST',
-            headers: {
-                // 🟢 TRÈS IMPORTANT : On envoie ton badge secret (Token)
-                'Authorization': `Bearer ${getToken()}`
-            },
-            body: formData // On envoie le paquet FormData
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: formData 
         });
 
-        const data = await response.json();
-
         if (response.ok) {
-            alert("✅ L'hôtel a bien été enregistré !");
-            closeModal(); // Ferme la fenêtre
-            window.location.reload(); // Recharge la page pour voir le nouvel hôtel
+            alert("✅ Hôtel et photo enregistrés avec succès !");
+            window.location.reload(); 
         } else {
+            const data = await response.json();
             alert("❌ Erreur : " + data.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
 
     } catch (error) {
-        console.error("Erreur ajout hôtel:", error);
-        alert("Impossible de contacter le serveur Render.");
+        alert("Erreur de connexion au serveur.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
     }
 }
 
