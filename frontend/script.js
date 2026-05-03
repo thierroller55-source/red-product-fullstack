@@ -11,28 +11,36 @@ const getToken = () => localStorage.getItem('token');
 // ============================================================
 async function chargerHotels() {
     const grid = document.getElementById('hotelsGrid');
-    const loader = document.getElementById('pageLoader'); // On récupère le loader de page
     if (!grid) return;
 
     try {
+        // Envoi immédiat de la requête
         const response = await fetch(API_HOTELS, {
-            headers: { 'Authorization': `Bearer ${getToken()}` }
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
         });
+
         const hotels = await response.json();
 
-        // 🟢 ANIMATION : On cache le loader une fois que les données sont là
-        if (loader) {
-            loader.classList.add('opacity-0');
-            setTimeout(() => loader.remove(), 500); // On le retire du code après 0.5s
+        // Sécurité si la session a expiré
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.replace('se connecté.html');
+            return;
         }
 
+        // Affichage instantané dès que les données arrivent
         if (Array.isArray(hotels)) {
             grid.innerHTML = ''; 
             hotels.forEach(hotel => ajouterCarteHotel(hotel));
+            
+            const count = document.getElementById('hotelCount');
+            if (count) count.textContent = hotels.length;
         }
-    } catch (err) { 
-        if (loader) loader.remove();
-        console.error(err); 
+
+    } catch (err) {
+        console.error('Erreur chargement hôtels :', err);
     }
 }
 
@@ -137,6 +145,24 @@ async function addHotel() {
         alert("Erreur de connexion au serveur.");
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
+    }
+}
+
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('preview');
+    const placeholder = document.getElementById('uploadPlaceholder');
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = () => { 
+            if(preview) {
+                preview.src = reader.result; 
+                preview.classList.remove('hidden');
+                if(placeholder) placeholder.classList.add('hidden'); // Cache l'icône +
+            }
+        };
+        reader.readAsDataURL(file);
     }
 }
 
