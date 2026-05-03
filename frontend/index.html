@@ -18,7 +18,7 @@
             }
         })();
     </script>
-    
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des hôtels</title>
@@ -154,64 +154,102 @@
         </main>
     </div>
 
-    <!-- ===== MODAL CRÉATION (CLOUDINARY) ===== -->
-    <div id="modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
-            <div class="p-5 border-b flex justify-between items-center">
-                <h3 class="font-bold uppercase text-xs tracking-widest text-gray-500">Ajouter un nouvel établissement</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 text-xl">✕</button>
-            </div>
-            
-            <form id="addHotelForm" onsubmit="event.preventDefault(); addHotel();" class="p-6 space-y-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Nom</label>
-                        <input type="text" id="newNom" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Adresse</label>
-                        <input type="text" id="newAdresse" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Email</label>
-                        <input type="email" id="newEmail" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Téléphone</label>
-                        <input type="text" id="newTel" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Prix par nuit</label>
-                        <input type="number" id="newPrix" required class="w-full border-b py-2 focus:outline-none focus:border-gray-800 text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Devise</label>
-                        <select id="newDevise" class="w-full border-b py-2 focus:outline-none text-sm bg-transparent">
-                            <option value="F XOF">F XOF</option>
-                            <option value="EUR">EUR</option>
-                            <option value="USD">USD</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase text-gray-400">Photo de l'hôtel</label>
-                    <div onclick="document.getElementById('photoInput').click()" class="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition">
-                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
-                        <p class="text-xs text-gray-400 mt-2">Cliquez pour choisir un fichier</p>
-                        <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)" class="hidden">
-                    </div>
-                    <img id="preview" src="" class="hidden w-full h-32 object-cover rounded-xl">
-                </div>
-
-                <div id="formError" class="hidden text-red-500 text-[10px] font-bold uppercase">⚠ Veuillez remplir tous les champs obligatoires.</div>
-
-                <div class="flex justify-end pt-4">
-                    <button type="submit" class="bg-gray-800 text-white px-10 py-3 rounded-xl font-bold text-sm hover:bg-black transition shadow-lg">Enregistrer l'hôtel</button>
-                </div>
-            </form>
+    <!-- ===== MODAL CRÉER UN HÔTEL (STYLE IMAGE 2) ===== -->
+<div id="modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+        
+        <!-- Header modal -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest">
+                Créer un nouveau hôtel
+            </h2>
+            <button onclick="closeModal()"
+                class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center text-gray-400 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
+
+        <!-- Body modal -->
+        <form id="addHotelForm" onsubmit="event.preventDefault(); addHotel();" class="p-6 flex flex-col gap-5">
+            
+            <!-- Ligne 1 : Nom + Adresse -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">Nom de l'hôtel</label>
+                    <input type="text" id="newNom" placeholder="Nom de l'hôtel" required
+                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">Adresse</label>
+                    <input type="text" id="newAdresse" placeholder="Les îles du saloum, Mar Lodj" required
+                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                </div>
+            </div>
+
+            <!-- Ligne 2 : Email + Téléphone -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">E-mail</label>
+                    <input type="email" id="newEmail" placeholder="information@gmail.com" required
+                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">Numéro de téléphone</label>
+                    <input type="text" id="newTel" placeholder="+221 77 777 77 77" required
+                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                </div>
+            </div>
+
+            <!-- Ligne 3 : Prix + Devise -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">Prix par nuit</label>
+                    <input type="text" id="newPrix" placeholder="25.000 XOF" required
+                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">Devise</label>
+                    <select id="newDevise"
+                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 bg-white transition cursor-pointer">
+                        <option value="F XOF" selected>F XOF</option>
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Zone Photo -->
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs text-gray-700 font-semibold">Ajouter une photo</label>
+                <div class="border-2 border-dashed border-gray-200 rounded-xl h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition relative overflow-hidden"
+                    onclick="document.getElementById('photoInput').click()">
+                    
+                    <!-- Icône Paysage + Texte -->
+                    <div id="uploadPlaceholder" class="flex flex-col items-center">
+                        <svg class="w-12 h-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-400 text-sm font-medium">Ajouter une photo</p>
+                    </div>
+
+                    <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewPhoto(event)" />
+                    <!-- L'image de prévisualisation qui couvrira la zone une fois choisie -->
+                    <img id="preview" src="" alt="preview" class="hidden absolute inset-0 w-full h-full object-cover" />
+                </div>
+            </div>
+
+            <!-- Bouton Enregistrer -->
+            <div class="flex justify-end mt-2">
+                <button type="submit"
+                    class="bg-[#343a40] hover:bg-black text-white text-sm font-bold px-12 py-3 rounded-lg transition shadow-md">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- Chargement du script -->
     <script src="script.js"></script>
