@@ -498,12 +498,15 @@ async function handleResetPassword(event) {
 window.addEventListener('pageshow', (event) => {
     const token = getToken();
     const path  = decodeURIComponent(window.location.pathname);
+    console.log("Chemin actuel :", path);
     
     // Liste des pages autorisées sans badge
     const isPublic = path.includes('se connecté') || 
                      path.includes('inscription') || 
                      path.includes('mode pass oublie') || 
                      path.includes('reset');
+
+                     console.log("Page publique ?", isPublic);
 
     // 🛡️ 1. LE GARDIEN IMMÉDIAT (Éjection si pas de badge)
     if (!token && !isPublic) {
