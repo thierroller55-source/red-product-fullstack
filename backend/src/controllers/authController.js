@@ -18,7 +18,24 @@ exports.register = async (req, res) => {
   }
 };
 
-// ── 2. CONNEXION ──
+// // ── 2. CONNEXION ──
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+//     const user = await User.findOne({ email });
+//     if (!user) return res.status(401).json({ success: false, message: "Accès refusé" });
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) return res.status(401).json({ success: false, message: "Accès refusé" });
+
+//     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+//     res.json({ success: true, message: "Accès passé", token, user: { nom: user.nom } });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Erreur serveur." });
+//   }
+// };
+
+// ── 2. CONNEXION AVEC CODE 2FA ──
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -28,8 +45,90 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ success: false, message: "Accès refusé" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, message: "Accès passé", token, user: { nom: user.nom } });
+    // Génère un code à 6 chiffres
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationCode        = code;
+    user.verificationCodeExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Envoie le code par email
+    try {
+      await transporter.sendMail({
+        from: '"RED PRODUCT" <thierroller55@gmail.com>',
+        to:   user.email,
+        subject: "🔐 Votre code de connexion RED PRODUCT",
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;
+                      padding:30px;border:1px solid #eee;border-radius:10px">
+            <h2 style="color:#454d55">RED PRODUCT</h2>
+            <p>Bonjour <strong>${user.nom}</strong>,</p>
+            <p>Voici votre code de vérification :</p>
+            <div style="background:#f4f4f4;padding:20px;text-align:center;
+                        border-radius:8px;margin:20px 0">
+              <h1 style="color:#454d55;letter-spacing:8px;font-size:36px">
+                ${code}
+              </h1>
+            </div>
+            <p style="color:#888;font-size:12px">
+              Ce code expire dans <strong>10 minutes</strong>.
+            </p>
+            <p style="color:#888;font-size:12px">
+              Si vous n'avez pas demandé cette connexion, ignorez cet email.
+            </p>
+          </div>
+        `
+      });
+    } catch (mailErr) {
+      console.error("Erreur email 2FA:", mailErr);
+    }
+
+    // Retourne l'userId SANS token — on attend la vérification du code
+    res.json({
+      success: true,
+      message: "Code envoyé par email",
+      userId:  user._id
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+};
+
+// ── 2B. VÉRIFICATION DU CODE 2FA ── (NOUVELLE FONCTION)
+exports.verifyCode = async (req, res) => {
+  try {
+    const { userId, code } = req.body;
+
+    const user = await User.findOne({
+      _id:                    userId,
+      verificationCode:       code,
+      verificationCodeExpires: { $gt: Date.now() }
+    });
+
+    if (!user) return res.status(401).json({
+      success: false,
+      message: "Code invalide ou expiré."
+    });
+
+    // Efface le code utilisé
+    user.verificationCode        = undefined;
+    user.verificationCodeExpires = undefined;
+    await user.save();
+
+    // Génère le vrai token JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      success: true,
+      message: "Connexion réussie !",
+      token,
+      user: { nom: user.nom }
+    });
+
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur." });
   }

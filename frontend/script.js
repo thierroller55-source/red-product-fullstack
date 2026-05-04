@@ -5,6 +5,9 @@ const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
 const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';
 
 const getToken = () => localStorage.getItem('token');
+// ✅ AJOUTE ICI — Variables 2FA
+let tempUserId    = null;
+let tempUserEmail = null;
 
 // ============================================================
 // 2. GESTION DES HÔTELS & STATISTIQUES
@@ -187,54 +190,174 @@ function previewPhoto(event) {
 // 3. AUTHENTIFICATION
 // ============================================================
 
+// async function seConnecter(event) {
+//     event.preventDefault();
+    
+//     // Récupération des éléments du bouton pour l'animation
+//     const submitBtn = document.getElementById('submitBtn');
+//     const spinner = document.getElementById('spinner');
+//     const btnText = document.getElementById('btnText');
+
+//     // Activer le chargement
+//     if (submitBtn) {
+//         submitBtn.disabled = true;
+//         spinner?.classList.remove('hidden');
+//         if (btnText) btnText.textContent = "Connexion...";
+//     }
+
+//     const email = document.getElementById('email').value;
+//     const password = document.getElementById('password').value;
+
+//     try {
+//         const res = await fetch(`${API_AUTH}/login`, { 
+//             method: 'POST', 
+//             headers: { 'Content-Type': 'application/json' }, 
+//             body: JSON.stringify({ email, password }) 
+//         });
+        
+//         const data = await res.json();
+        
+//         if (res.ok) { 
+//             localStorage.setItem('token', data.token); 
+//             if(data.user) localStorage.setItem('userName', data.user.nom);
+//             window.location.replace('dashweb.html'); 
+//         } else { 
+//             alert("❌ " + data.message); 
+//             // Remettre le bouton à zéro
+//             if (submitBtn) {
+//                 submitBtn.disabled = false;
+//                 spinner?.classList.add('hidden');
+//                 if (btnText) btnText.textContent = "Se connecter";
+//             }
+//         }
+//     } catch (e) { 
+//         alert("Erreur serveur : vérifiez votre connexion."); 
+//         if (submitBtn) {
+//             submitBtn.disabled = false;
+//             spinner?.classList.add('hidden');
+//             if (btnText) btnText.textContent = "Se connecter";
+//         }
+//     }
+// }
+
 async function seConnecter(event) {
     event.preventDefault();
-    
-    // Récupération des éléments du bouton pour l'animation
-    const submitBtn = document.getElementById('submitBtn');
-    const spinner = document.getElementById('spinner');
-    const btnText = document.getElementById('btnText');
 
-    // Activer le chargement
+    const email     = document.getElementById('email').value;
+    const password  = document.getElementById('password').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner   = document.getElementById('spinner');
+    const btnText   = document.getElementById('btnText');
+
     if (submitBtn) {
         submitBtn.disabled = true;
         spinner?.classList.remove('hidden');
-        if (btnText) btnText.textContent = "Connexion...";
+        if (btnText) btnText.textContent = "Envoi du code...";
     }
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
     try {
-        const res = await fetch(`${API_AUTH}/login`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ email, password }) 
+        const res  = await fetch(`${API_AUTH}/login`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ email, password })
         });
-        
         const data = await res.json();
-        
-        if (res.ok) { 
-            localStorage.setItem('token', data.token); 
-            if(data.user) localStorage.setItem('userName', data.user.nom);
-            window.location.replace('dashweb.html'); 
-        } else { 
-            alert("❌ " + data.message); 
-            // Remettre le bouton à zéro
+
+        if (res.ok) {
+            // Sauvegarde pour étape 2
+            tempUserId    = data.userId;
+            tempUserEmail = email;
+
+            // Cache le formulaire
+            document.getElementById('loginForm').classList.add('hidden');
+
+            // Affiche l'écran du code
+            document.getElementById('codeScreen').classList.remove('hidden');
+            document.getElementById('verificationCode')?.focus();
+
+        } else {
+            alert("❌ " + data.message);
             if (submitBtn) {
                 submitBtn.disabled = false;
                 spinner?.classList.add('hidden');
                 if (btnText) btnText.textContent = "Se connecter";
             }
         }
-    } catch (e) { 
-        alert("Erreur serveur : vérifiez votre connexion."); 
+    } catch (e) {
+        alert("Erreur serveur : vérifiez votre connexion.");
         if (submitBtn) {
             submitBtn.disabled = false;
             spinner?.classList.add('hidden');
             if (btnText) btnText.textContent = "Se connecter";
         }
     }
+}
+
+// ── VÉRIFICATION CODE 2FA — Étape 2 ──────────────────────
+async function verifierCode() {
+    const code         = document.getElementById('verificationCode').value.trim();
+    const verifyBtn    = document.getElementById('verifyBtn');
+    const verifySpinner = document.getElementById('verifySpinner');
+    const verifyBtnText = document.getElementById('verifyBtnText');
+    const codeError    = document.getElementById('codeError');
+
+    if (code.length !== 6) {
+        if (codeError) {
+            codeError.textContent = "⚠ Le code doit contenir 6 chiffres.";
+            codeError.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (verifyBtn) {
+        verifyBtn.disabled = true;
+        verifySpinner?.classList.remove('hidden');
+        if (verifyBtnText) verifyBtnText.textContent = "Vérification...";
+    }
+
+    try {
+        const res  = await fetch(`${API_AUTH}/verify-code`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ userId: tempUserId, code })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('token', data.token);
+            if (data.user) localStorage.setItem('userName', data.user.nom);
+            window.location.replace('dashweb.html');
+        } else {
+            if (codeError) {
+                codeError.textContent = "❌ " + data.message;
+                codeError.classList.remove('hidden');
+            }
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifySpinner?.classList.add('hidden');
+                if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
+            }
+        }
+    } catch (e) {
+        alert("❌ Erreur de connexion.");
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifySpinner?.classList.add('hidden');
+            if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
+        }
+    }
+}
+
+// ── RENVOYER LE CODE ─────────────────────────────────────
+async function renvoyerCode() {
+    if (!tempUserEmail) return;
+    alert("⏳ Veuillez remplir à nouveau le formulaire pour recevoir un nouveau code.");
+    document.getElementById('codeScreen').classList.add('hidden');
+    document.getElementById('loginForm').classList.remove('hidden');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText   = document.getElementById('btnText');
+    if (submitBtn) submitBtn.disabled = false;
+    if (btnText)   btnText.textContent = "Se connecter";
 }
 
 async function handleRegister(event) {
