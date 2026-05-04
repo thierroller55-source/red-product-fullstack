@@ -84,6 +84,7 @@ exports.login = async (req, res) => {
   }
 };
 
+
 // ── 2. CONNEXION AVEC CODE 2FA ──
 // exports.login = async (req, res) => {
 //   try {
