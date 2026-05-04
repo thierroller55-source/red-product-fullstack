@@ -240,124 +240,109 @@ function previewPhoto(event) {
 //     }
 // }
 
+// 1. Variables globales (en haut du fichier)
+let tempUserId = null;
+let tempUserEmail = null;
+
+// ── ÉTAPE 1 : CONNEXION ET ENVOI DU CODE ───────────────────
 async function seConnecter(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
 
-    const email     = document.getElementById('email').value;
-    const password  = document.getElementById('password').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
     const submitBtn = document.getElementById('submitBtn');
-    const spinner   = document.getElementById('spinner');
-    const btnText   = document.getElementById('btnText');
-
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        spinner?.classList.remove('hidden');
-        if (btnText) btnText.textContent = "Envoi du code...";
-    }
 
     try {
-        const res  = await fetch(`${API_AUTH}/login`, {
-            method:  'POST',
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            document.getElementById('btnText').textContent = "Envoi du code...";
+            document.getElementById('spinner')?.classList.remove('hidden');
+        }
+
+        const res = await fetch(`${API_AUTH}/login`, {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password })
         });
         const data = await res.json();
 
         if (res.ok) {
-            // Sauvegarde pour étape 2
-            tempUserId    = data.userId;
+            // On sauvegarde l'ID pour l'étape suivante
+            tempUserId = data.userId;
             tempUserEmail = email;
 
-            // Cache le formulaire
+            // Transition visuelle
             document.getElementById('loginForm').classList.add('hidden');
-
-            // Affiche l'écran du code
             document.getElementById('codeScreen').classList.remove('hidden');
             document.getElementById('verificationCode')?.focus();
-
+            
+            alert("📧 Code envoyé ! Vérifie tes e-mails.");
         } else {
             alert("❌ " + data.message);
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                spinner?.classList.add('hidden');
-                if (btnText) btnText.textContent = "Se connecter";
-            }
+            resetLoginButton();
         }
     } catch (e) {
-        alert("Erreur serveur : vérifiez votre connexion.");
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            spinner?.classList.add('hidden');
-            if (btnText) btnText.textContent = "Se connecter";
-        }
+        alert("Erreur serveur.");
+        resetLoginButton();
     }
 }
 
-// ── VÉRIFICATION CODE 2FA — Étape 2 ──────────────────────
+// ── ÉTAPE 2 : VÉRIFICATION DU CODE (OTP) ──────────────────
 async function verifierCode() {
-    const code         = document.getElementById('verificationCode').value.trim();
-    const verifyBtn    = document.getElementById('verifyBtn');
-    const verifySpinner = document.getElementById('verifySpinner');
-    const verifyBtnText = document.getElementById('verifyBtnText');
-    const codeError    = document.getElementById('codeError');
+    const code = document.getElementById('verificationCode').value.trim();
+    const verifyBtn = document.getElementById('verifyBtn');
+    const codeError = document.getElementById('codeError');
 
     if (code.length !== 6) {
-        if (codeError) {
-            codeError.textContent = "⚠ Le code doit contenir 6 chiffres.";
-            codeError.classList.remove('hidden');
-        }
+        alert("Merci de taper les 6 chiffres.");
         return;
     }
 
-    if (verifyBtn) {
-        verifyBtn.disabled = true;
-        verifySpinner?.classList.remove('hidden');
-        if (verifyBtnText) verifyBtnText.textContent = "Vérification...";
-    }
-
     try {
-        const res  = await fetch(`${API_AUTH}/verify-code`, {
-            method:  'POST',
+        if (verifyBtn) {
+            verifyBtn.disabled = true;
+            document.getElementById('verifySpinner')?.classList.remove('hidden');
+            document.getElementById('verifyBtnText').textContent = "Vérification...";
+        }
+
+        const res = await fetch(`${API_AUTH}/verify-code`, {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ userId: tempUserId, code })
+            body: JSON.stringify({ userId: tempUserId, code: code })
         });
         const data = await res.json();
 
         if (res.ok) {
+            // ✅ SUCCÈS FINAL
             localStorage.setItem('token', data.token);
-            if (data.user) localStorage.setItem('userName', data.user.nom);
+            if(data.user) localStorage.setItem('userName', data.user.nom);
             window.location.replace('dashweb.html');
         } else {
-            if (codeError) {
-                codeError.textContent = "❌ " + data.message;
-                codeError.classList.remove('hidden');
-            }
+            alert("❌ " + data.message);
             if (verifyBtn) {
                 verifyBtn.disabled = false;
-                verifySpinner?.classList.add('hidden');
-                if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
+                document.getElementById('verifySpinner')?.classList.add('hidden');
+                document.getElementById('verifyBtnText').textContent = "Valider le code";
             }
         }
     } catch (e) {
-        alert("❌ Erreur de connexion.");
-        if (verifyBtn) {
-            verifyBtn.disabled = false;
-            verifySpinner?.classList.add('hidden');
-            if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
-        }
+        alert("Erreur de connexion.");
     }
 }
 
-// ── RENVOYER LE CODE ─────────────────────────────────────
-async function renvoyerCode() {
-    if (!tempUserEmail) return;
-    alert("⏳ Veuillez remplir à nouveau le formulaire pour recevoir un nouveau code.");
-    document.getElementById('codeScreen').classList.add('hidden');
-    document.getElementById('loginForm').classList.remove('hidden');
+// ── RÉINITIALISATION DES BOUTONS ──────────────────────────
+function resetLoginButton() {
     const submitBtn = document.getElementById('submitBtn');
-    const btnText   = document.getElementById('btnText');
-    if (submitBtn) submitBtn.disabled = false;
-    if (btnText)   btnText.textContent = "Se connecter";
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        document.getElementById('spinner')?.classList.add('hidden');
+        document.getElementById('btnText').textContent = "Se connecter";
+    }
+}
+
+async function renvoyerCode() {
+    alert("Redirection vers le formulaire...");
+    window.location.reload(); // Plus simple pour renvoyer un code proprement
 }
 
 async function handleRegister(event) {
@@ -377,8 +362,6 @@ async function handleRegister(event) {
         } else { alert("❌ Erreur lors de l'inscription"); }
     } catch (e) { alert("Erreur serveur"); }
 }
-
-
 
 // verification du token en arrière-plan pour les pages privées
 async function verifierToken(token) {
@@ -664,6 +647,14 @@ function finaliserInitialisation() {
     document.getElementById('registrationForm')?.addEventListener('submit', handleRegister);
     document.getElementById('forgotPasswordForm')?.addEventListener('submit', handleForgotPassword);
     document.getElementById('resetPasswordForm')?.addEventListener('submit', handleResetPassword);
+
+    // 🟢 AJOUT : On branche le formulaire du code à 6 chiffres
+    // On cherche le formulaire à l'intérieur de ta div #codeScreen
+    const verifyForm = document.querySelector('#codeScreen form'); 
+    if (verifyForm) {
+        console.log("Écouteur du code de sécurité activé");
+        verifyForm.addEventListener('submit', handleVerifyCode);
+    }
 
     // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
      const addForm = document.getElementById('addHotelForm');

@@ -150,6 +150,7 @@ exports.login = async (req, res) => {
 //   }
 // };
 
+
 // ── 2B. VÉRIFICATION DU CODE 2FA ── (NOUVELLE FONCTION)
 exports.verifyCode = async (req, res) => {
   try {
