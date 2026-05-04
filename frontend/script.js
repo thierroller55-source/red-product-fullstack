@@ -240,109 +240,158 @@ function previewPhoto(event) {
 //     }
 // }
 
-// 1. Variables globales (en haut du fichier)
-let tempUserId = null;
-let tempUserEmail = null;
-
-// ── ÉTAPE 1 : CONNEXION ET ENVOI DU CODE ───────────────────
 async function seConnecter(event) {
-    if (event) event.preventDefault();
+    event.preventDefault();
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email     = document.getElementById('email').value;
+    const password  = document.getElementById('password').value;
     const submitBtn = document.getElementById('submitBtn');
+    const spinner   = document.getElementById('spinner');
+    const btnText   = document.getElementById('btnText');
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        spinner?.classList.remove('hidden');
+        if (btnText) btnText.textContent = "Envoi du code...";
+    }
 
     try {
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            document.getElementById('btnText').textContent = "Envoi du code...";
-            document.getElementById('spinner')?.classList.remove('hidden');
-        }
-
-        const res = await fetch(`${API_AUTH}/login`, {
-            method: 'POST',
+        const res  = await fetch(`${API_AUTH}/login`, {
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body:    JSON.stringify({ email, password })
         });
         const data = await res.json();
 
         if (res.ok) {
-            // On sauvegarde l'ID pour l'étape suivante
-            tempUserId = data.userId;
+            // Sauvegarde pour étape 2
+            tempUserId    = data.userId;
             tempUserEmail = email;
 
-            // Transition visuelle
+            // Cache le formulaire
             document.getElementById('loginForm').classList.add('hidden');
+
+            // Affiche l'écran du code
             document.getElementById('codeScreen').classList.remove('hidden');
             document.getElementById('verificationCode')?.focus();
-            
-            alert("📧 Code envoyé ! Vérifie tes e-mails.");
+
         } else {
             alert("❌ " + data.message);
-            resetLoginButton();
-        }
-    } catch (e) {
-        alert("Erreur serveur.");
-        resetLoginButton();
-    }
-}
-
-// ── ÉTAPE 2 : VÉRIFICATION DU CODE (OTP) ──────────────────
-async function verifierCode() {
-    const code = document.getElementById('verificationCode').value.trim();
-    const verifyBtn = document.getElementById('verifyBtn');
-    const codeError = document.getElementById('codeError');
-
-    if (code.length !== 6) {
-        alert("Merci de taper les 6 chiffres.");
-        return;
-    }
-
-    try {
-        if (verifyBtn) {
-            verifyBtn.disabled = true;
-            document.getElementById('verifySpinner')?.classList.remove('hidden');
-            document.getElementById('verifyBtnText').textContent = "Vérification...";
-        }
-
-        const res = await fetch(`${API_AUTH}/verify-code`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: tempUserId, code: code })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            // ✅ SUCCÈS FINAL
-            localStorage.setItem('token', data.token);
-            if(data.user) localStorage.setItem('userName', data.user.nom);
-            window.location.replace('dashweb.html');
-        } else {
-            alert("❌ " + data.message);
-            if (verifyBtn) {
-                verifyBtn.disabled = false;
-                document.getElementById('verifySpinner')?.classList.add('hidden');
-                document.getElementById('verifyBtnText').textContent = "Valider le code";
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                spinner?.classList.add('hidden');
+                if (btnText) btnText.textContent = "Se connecter";
             }
         }
     } catch (e) {
-        alert("Erreur de connexion.");
+        alert("Erreur serveur : vérifiez votre connexion.");
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            spinner?.classList.add('hidden');
+            if (btnText) btnText.textContent = "Se connecter";
+        }
     }
 }
 
-// ── RÉINITIALISATION DES BOUTONS ──────────────────────────
-function resetLoginButton() {
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        document.getElementById('spinner')?.classList.add('hidden');
-        document.getElementById('btnText').textContent = "Se connecter";
+async function handleVerifyCode(event) {
+    if (event) event.preventDefault();
+
+    // 1. On récupère le code tapé (vérifie que l'ID est bien 'verificationCode')
+    const codeValue = document.getElementById('verificationCode').value.trim();
+
+    try {
+        // 2. On envoie au serveur
+        const res = await fetch(`${API_AUTH}/verify-code`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ 
+                userId: tempUserId, // L'ID récupéré au login
+                code:   codeValue 
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // ✅ SUCCÈS : On enregistre le badge (Token)
+            localStorage.setItem('token', data.token);
+            if(data.user) localStorage.setItem('userName', data.user.nom);
+            
+            alert("✅ Connexion réussie !");
+            window.location.replace('dashweb.html'); // On entre sur le site !
+        } else {
+            alert("❌ " + data.message);
+        }
+    } catch (e) {
+        alert("Erreur de communication avec le serveur.");
     }
 }
 
+// ── VÉRIFICATION CODE 2FA — Étape 2 ──────────────────────
+async function verifierCode() {
+    const code         = document.getElementById('verificationCode').value.trim();
+    const verifyBtn    = document.getElementById('verifyBtn');
+    const verifySpinner = document.getElementById('verifySpinner');
+    const verifyBtnText = document.getElementById('verifyBtnText');
+    const codeError    = document.getElementById('codeError');
+
+    if (code.length !== 6) {
+        if (codeError) {
+            codeError.textContent = "⚠ Le code doit contenir 6 chiffres.";
+            codeError.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (verifyBtn) {
+        verifyBtn.disabled = true;
+        verifySpinner?.classList.remove('hidden');
+        if (verifyBtnText) verifyBtnText.textContent = "Vérification...";
+    }
+
+    try {
+        const res  = await fetch(`${API_AUTH}/verify-code`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ userId: tempUserId, code })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('token', data.token);
+            if (data.user) localStorage.setItem('userName', data.user.nom);
+            window.location.replace('dashweb.html');
+        } else {
+            if (codeError) {
+                codeError.textContent = "❌ " + data.message;
+                codeError.classList.remove('hidden');
+            }
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifySpinner?.classList.add('hidden');
+                if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
+            }
+        }
+    } catch (e) {
+        alert("❌ Erreur de connexion.");
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifySpinner?.classList.add('hidden');
+            if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
+        }
+    }
+}
+
+// ── RENVOYER LE CODE ─────────────────────────────────────
 async function renvoyerCode() {
-    alert("Redirection vers le formulaire...");
-    window.location.reload(); // Plus simple pour renvoyer un code proprement
+    if (!tempUserEmail) return;
+    alert("⏳ Veuillez remplir à nouveau le formulaire pour recevoir un nouveau code.");
+    document.getElementById('codeScreen').classList.add('hidden');
+    document.getElementById('loginForm').classList.remove('hidden');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText   = document.getElementById('btnText');
+    if (submitBtn) submitBtn.disabled = false;
+    if (btnText)   btnText.textContent = "Se connecter";
 }
 
 async function handleRegister(event) {
