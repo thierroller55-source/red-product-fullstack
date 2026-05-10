@@ -11,7 +11,18 @@ const app = express();
 connectDB();
 
 // ─── 2. MIDDLEWARES ───────────────────────────────────────────
-app.use(cors()); // Autorise ton dossier frontend à faire des requêtes ici
+app.use(
+  cors({
+    origin: [
+      "http://127.0.0.1:5500",
+      "http://localhost:5500",
+      "https://red-product-woad.vercel.app",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+); // Autorise ton dossier frontend à faire des requêtes ici
 app.use(express.json()); // Permet de lire le JSON envoyé par le script.js
 
 // ─── 3. ROUTES API ────────────────────────────────────────────
