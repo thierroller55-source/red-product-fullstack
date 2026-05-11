@@ -216,6 +216,7 @@ async function seConnecter(event) {
         if (res.ok) {
             localStorage.setItem('token', data.token);
             window.location.replace('dashweb.html');
+
         } else {
             alert("❌ " + data.message);
             if (submitBtn) {

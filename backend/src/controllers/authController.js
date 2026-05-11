@@ -1,20 +1,58 @@
+const axios = require('axios');
 const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Notification = require('../models/notificationModel');
 const crypto = require('crypto');
-const transporter = require('../config/mail');
 
-// ── 1. INSCRIPTION ──
+
+
+// — 1. INSCRIPTION AVEC VÉRIFICATION EMAIL —
 exports.register = async (req, res) => {
   try {
     const { nom, email, password } = req.body;
+
+    // Vérifie si email déjà utilisé
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ 
+      message: "Email déjà utilisé." 
+    });
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ nom, email, password: hashedPassword });
+    const activationToken = crypto.randomBytes(32).toString('hex');
+
+    const newUser = new User({ 
+      nom, 
+      email, 
+      password: hashedPassword,
+      isActive: false,
+      activationToken
+    });
     await newUser.save();
-    res.status(201).json({ success: true, message: "Utilisateur créé !" });
+
+    // Lien d'activation
+    const activationUrl = `https://red-product-fullstack.onrender.com/api/auth/activate?token=${activationToken}`;
+
+    // Envoi email via Brevo
+    await axios.post('https://api.brevo.com/v3/smtp/email', {
+      sender: { name: "RED_PRODUCT", email: "thierroller55@gmail.com" },
+      to: [{ email }],
+      subject: "Active ton compte RED PRODUCT",
+      htmlContent: `<h2>Bienvenue !</h2><p><a href="${activationUrl}">Clique ici pour activer ton compte</a></p>`
+    }, {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.status(201).json({ 
+      success: true, 
+      message: "Compte créé ! Vérifie ton email." 
+    });
+
   } catch (error) {
-    res.status(400).json({ success: false, message: "Erreur lors de l'inscription." });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -25,15 +63,15 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ 
-      success: false, 
-      message: "Adresse email introuvable." 
+    if (!user) return res.status(401).json({
+      success: false,
+      message: "Adresse email introuvable."
     });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ 
-      success: false, 
-      message: "Mot de passe incorrect." 
+    if (!user.isActive) return res.status(403).json({
+      success: false,
+      message: "Vérifie ton email pour activer ton compte."
     });
 
     // Génère le token JWT directement
@@ -52,6 +90,26 @@ exports.login = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur." });
+  }
+};
+
+
+exports.activateAccount = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const user = await User.findOne({ activationToken: token });
+
+    if (!user) return res.status(400).json({
+      message: "Lien invalide ou expiré."
+    });
+
+    user.isActive = true;
+    user.activationToken = undefined;
+    await user.save();
+
+    res.redirect('https://red-product-fullstack-6bal.vercel.app/se%20connecté.html?activated=true');
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -115,3 +173,4 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: "Erreur réinitialisation" });
   }
 };
+

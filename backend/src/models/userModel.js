@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema({
   verificationCode:        String,
   verificationCodeExpires: Date,
 
+  // ✅ AJOUTE CES 2 LIGNES — Activation compte
+  // Activation du compte
+isActive:          { type: Boolean, default: false },
+activationToken:   String,
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
