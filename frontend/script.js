@@ -1,15 +1,11 @@
 // ============================================================
 // 1. CONFIGURATION ET CONSTANTES
 // ============================================================
-const isLocal = window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1';
-
-const BASE_URL = isLocal 
-  ? 'http://localhost:3000' 
-  : 'https://red-product-fullstack.onrender.com';
-
-const API_HOTELS = `${BASE_URL}/api/hotels`;
-const API_AUTH   = `${BASE_URL}/api/auth`;        
+// const API_HOTELS = 'http://localhost:3000/api/hotels';
+// const API_AUTH   = 'http://localhost:3000/api/auth';
+        //    lien deploiyement render
+const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
+const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';        
 
 const getToken = () => localStorage.getItem('token');
 // ✅ AJOUTE ICI — Variables 2FA
