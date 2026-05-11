@@ -7,6 +7,7 @@ const crypto = require('crypto');
 
 
 
+
 // — 1. INSCRIPTION AVEC VÉRIFICATION EMAIL —
 exports.register = async (req, res) => {
   try {
@@ -14,16 +15,16 @@ exports.register = async (req, res) => {
 
     // Vérifie si email déjà utilisé
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ 
-      message: "Email déjà utilisé." 
+    if (existing) return res.status(400).json({
+      message: "Email déjà utilisé."
     });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const activationToken = crypto.randomBytes(32).toString('hex');
 
-    const newUser = new User({ 
-      nom, 
-      email, 
+    const newUser = new User({
+      nom,
+      email,
       password: hashedPassword,
       isActive: false,
       activationToken
@@ -35,10 +36,40 @@ exports.register = async (req, res) => {
 
     // Envoi email via Brevo
     await axios.post('https://api.brevo.com/v3/smtp/email', {
-      sender: { name: "RED_PRODUCT", email: "thierroller55@gmail.com" },
+      sender: { name: "RED PRODUCT", email: "thierroller55@gmail.com" },
       to: [{ email }],
       subject: "Active ton compte RED PRODUCT",
-      htmlContent: `<h2>Bienvenue !</h2><p><a href="${activationUrl}">Clique ici pour activer ton compte</a></p>`
+      htmlContent: `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+    <div style="background:#1a1a1a;padding:30px;text-align:center;">
+      <h1 style="color:#e63946;margin:0;font-size:28px;letter-spacing:2px;">RED PRODUCT</h1>
+      <p style="color:#aaaaaa;margin:8px 0 0;font-size:13px;">Plateforme de gestion hôtelière</p>
+    </div>
+    <div style="padding:40px 30px;">
+      <h2 style="color:#1a1a1a;font-size:22px;">Bienvenue ${nom} ! 👋</h2>
+      <p style="color:#555555;font-size:15px;line-height:1.6;">
+        Merci de vous être inscrit sur <strong>RED PRODUCT</strong>.<br>
+        Cliquez sur le bouton ci-dessous pour activer votre compte.
+      </p>
+      <div style="text-align:center;margin:35px 0;">
+        <a href="${activationUrl}" style="background:#e63946;color:#ffffff;padding:14px 40px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:bold;display:inline-block;">
+          ✅ Activer mon compte
+        </a>
+      </div>
+      <p style="color:#999999;font-size:12px;text-align:center;">
+        Ce lien expire dans <strong>24 heures</strong>.<br>
+        Si vous n'avez pas créé de compte, ignorez cet email.
+      </p>
+    </div>
+    <div style="background:#1a1a1a;padding:20px;text-align:center;">
+      <p style="color:#666666;font-size:12px;margin:0;">© 2026 RED PRODUCT — Tous droits réservés</p>
+    </div>
+  </div>
+</body>
+</html>`
     }, {
       headers: {
         'api-key': process.env.BREVO_API_KEY,
@@ -46,9 +77,9 @@ exports.register = async (req, res) => {
       }
     });
 
-    res.status(201).json({ 
-      success: true, 
-      message: "Compte créé ! Vérifie ton email." 
+    res.status(201).json({
+      success: true,
+      message: "Compte créé ! Vérifie ton email."
     });
 
   } catch (error) {
