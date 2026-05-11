@@ -3,13 +3,13 @@
 // ============================================================
 // const API_HOTELS = 'http://localhost:3000/api/hotels';
 // const API_AUTH   = 'http://localhost:3000/api/auth';
-        //    lien deploiyement render
+//    lien deploiyement render
 const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
-const API_AUTH   = 'https://red-product-fullstack.onrender.com/api/auth';        
+const API_AUTH = 'https://red-product-fullstack.onrender.com/api/auth';
 
 const getToken = () => localStorage.getItem('token');
 // ✅ AJOUTE ICI — Variables 2FA
-let tempUserId    = null;
+let tempUserId = null;
 let tempUserEmail = null;
 
 // ============================================================
@@ -38,9 +38,9 @@ async function chargerHotels() {
 
         // Affichage instantané dès que les données arrivent
         if (Array.isArray(hotels)) {
-            grid.innerHTML = ''; 
+            grid.innerHTML = '';
             hotels.forEach(hotel => ajouterCarteHotel(hotel));
-            
+
             const count = document.getElementById('hotelCount');
             if (count) count.textContent = hotels.length;
         }
@@ -79,7 +79,7 @@ function animerChiffre(id, fin) {
 
 function ajouterCarteHotel(hotel) {
     const grid = document.getElementById('hotelsGrid');
-    const token = getToken(); 
+    const token = getToken();
     const imgUrl = hotel.image || 'https://placehold.co/400x250?text=Pas+d+image';
     const card = document.createElement('div');
     card.id = `hotel-${hotel._id}`;
@@ -93,19 +93,19 @@ function ajouterCarteHotel(hotel) {
 // ── AJOUTER UN NOUVEL HÔTEL (ENVOI À CLOUDINARY + MONGODB) ──
 async function addHotel() {
     const submitBtn = document.querySelector('#addHotelForm button[type="submit"]');
-    
+
     // 🟢 SÉCURITÉ : Si le bouton est déjà désactivé, on arrête tout (empêche le double envoi)
     if (submitBtn.disabled) return;
 
     const formData = new FormData();
     const photoFile = document.getElementById('photoInput').files[0];
-    
-    const nom     = document.getElementById('newNom').value;
+
+    const nom = document.getElementById('newNom').value;
     const adresse = document.getElementById('newAdresse').value;
-    const email   = document.getElementById('newEmail').value;
-    const tel     = document.getElementById('newTel').value;
-    const prix    = document.getElementById('newPrix').value;
-    const devise  = document.getElementById('newDevise').value;
+    const email = document.getElementById('newEmail').value;
+    const tel = document.getElementById('newTel').value;
+    const prix = document.getElementById('newPrix').value;
+    const devise = document.getElementById('newDevise').value;
 
     if (!nom || !adresse || !prix || !photoFile) {
         alert("Merci de remplir tous les champs et d'ajouter une photo.");
@@ -128,12 +128,12 @@ async function addHotel() {
         const response = await fetch(API_HOTELS, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${getToken()}` },
-            body: formData 
+            body: formData
         });
 
         if (response.ok) {
             // Pas d'alerte, on recharge tout de suite
-            window.location.reload(); 
+            window.location.reload();
         } else {
             // En cas d'erreur, on redonne la main au bouton
             submitBtn.disabled = false;
@@ -162,10 +162,10 @@ async function supprimerHotel(id) {
             if (card) {
                 card.remove(); // Supprime l'élément HTML sans recharger
             }
-            
+
             // 🟢 ÉTAPE 2 : On recharge les données en arrière-plan pour le compteur
-            chargerHotels(); 
-            
+            chargerHotels();
+
             console.log("Hôtel supprimé de l'écran");
         }
     } catch (error) { console.error(error); }
@@ -178,106 +178,44 @@ function previewPhoto(event) {
 
     if (file) {
         const reader = new FileReader();
-        reader.onload = () => { 
-            if(preview) {
-                preview.src = reader.result; 
+        reader.onload = () => {
+            if (preview) {
+                preview.src = reader.result;
                 preview.classList.remove('hidden');
-                if(placeholder) placeholder.classList.add('hidden'); // Cache l'icône +
+                if (placeholder) placeholder.classList.add('hidden'); // Cache l'icône +
             }
         };
         reader.readAsDataURL(file);
     }
 }
 
-// ============================================================
-// 3. AUTHENTIFICATION
-// ============================================================
-
-// async function seConnecter(event) {
-//     event.preventDefault();
-    
-//     // Récupération des éléments du bouton pour l'animation
-//     const submitBtn = document.getElementById('submitBtn');
-//     const spinner = document.getElementById('spinner');
-//     const btnText = document.getElementById('btnText');
-
-//     // Activer le chargement
-//     if (submitBtn) {
-//         submitBtn.disabled = true;
-//         spinner?.classList.remove('hidden');
-//         if (btnText) btnText.textContent = "Connexion...";
-//     }
-
-//     const email = document.getElementById('email').value;
-//     const password = document.getElementById('password').value;
-
-//     try {
-//         const res = await fetch(`${API_AUTH}/login`, { 
-//             method: 'POST', 
-//             headers: { 'Content-Type': 'application/json' }, 
-//             body: JSON.stringify({ email, password }) 
-//         });
-        
-//         const data = await res.json();
-        
-//         if (res.ok) { 
-//             localStorage.setItem('token', data.token); 
-//             if(data.user) localStorage.setItem('userName', data.user.nom);
-//             window.location.replace('dashweb.html'); 
-//         } else { 
-//             alert("❌ " + data.message); 
-//             // Remettre le bouton à zéro
-//             if (submitBtn) {
-//                 submitBtn.disabled = false;
-//                 spinner?.classList.add('hidden');
-//                 if (btnText) btnText.textContent = "Se connecter";
-//             }
-//         }
-//     } catch (e) { 
-//         alert("Erreur serveur : vérifiez votre connexion."); 
-//         if (submitBtn) {
-//             submitBtn.disabled = false;
-//             spinner?.classList.add('hidden');
-//             if (btnText) btnText.textContent = "Se connecter";
-//         }
-//     }
-// }
 
 async function seConnecter(event) {
     event.preventDefault();
 
-    const email     = document.getElementById('email').value;
-    const password  = document.getElementById('password').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
     const submitBtn = document.getElementById('submitBtn');
-    const spinner   = document.getElementById('spinner');
-    const btnText   = document.getElementById('btnText');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
 
     if (submitBtn) {
         submitBtn.disabled = true;
         spinner?.classList.remove('hidden');
-        if (btnText) btnText.textContent = "Envoi du code...";
+        if (btnText) btnText.textContent = "Connexion...";
     }
 
     try {
-        const res  = await fetch(`${API_AUTH}/login`, {
-            method:  'POST',
+        const res = await fetch(`${API_AUTH}/login`, {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password })
         });
         const data = await res.json();
 
         if (res.ok) {
-            // Sauvegarde pour étape 2
-            tempUserId    = data.userId;
-            tempUserEmail = email;
-
-            // Cache le formulaire
-            document.getElementById('loginForm').classList.add('hidden');
-
-            // Affiche l'écran du code
-            document.getElementById('codeScreen').classList.remove('hidden');
-            document.getElementById('verificationCode')?.focus();
-
+            localStorage.setItem('token', data.token);
+            window.location.replace('dashweb.html');
         } else {
             alert("❌ " + data.message);
             if (submitBtn) {
@@ -296,94 +234,6 @@ async function seConnecter(event) {
     }
 }
 
-async function handleVerifyCode(event) {
-    if (event) event.preventDefault();
-
-    // 1. On récupère le code tapé (vérifie que l'ID est bien 'verificationCode')
-    const codeValue = document.getElementById('verificationCode').value.trim();
-
-    try {
-        // 2. On envoie au serveur
-        const res = await fetch(`${API_AUTH}/verify-code`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ 
-                userId: tempUserId, // L'ID récupéré au login
-                code:   codeValue 
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            // ✅ SUCCÈS : On enregistre le badge (Token)
-            localStorage.setItem('token', data.token);
-            if(data.user) localStorage.setItem('userName', data.user.nom);
-            
-            alert("✅ Connexion réussie !");
-            window.location.replace('dashweb.html'); // On entre sur le site !
-        } else {
-            alert("❌ " + data.message);
-        }
-    } catch (e) {
-        alert("Erreur de communication avec le serveur.");
-    }
-}
-
-// ── VÉRIFICATION CODE 2FA — Étape 2 ──────────────────────
-async function verifierCode() {
-    const code         = document.getElementById('verificationCode').value.trim();
-    const verifyBtn    = document.getElementById('verifyBtn');
-    const verifySpinner = document.getElementById('verifySpinner');
-    const verifyBtnText = document.getElementById('verifyBtnText');
-    const codeError    = document.getElementById('codeError');
-
-    if (code.length !== 6) {
-        if (codeError) {
-            codeError.textContent = "⚠ Le code doit contenir 6 chiffres.";
-            codeError.classList.remove('hidden');
-        }
-        return;
-    }
-
-    if (verifyBtn) {
-        verifyBtn.disabled = true;
-        verifySpinner?.classList.remove('hidden');
-        if (verifyBtnText) verifyBtnText.textContent = "Vérification...";
-    }
-
-    try {
-        const res  = await fetch(`${API_AUTH}/verify-code`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ userId: tempUserId, code })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            localStorage.setItem('token', data.token);
-            if (data.user) localStorage.setItem('userName', data.user.nom);
-            window.location.replace('dashweb.html');
-        } else {
-            if (codeError) {
-                codeError.textContent = "❌ " + data.message;
-                codeError.classList.remove('hidden');
-            }
-            if (verifyBtn) {
-                verifyBtn.disabled = false;
-                verifySpinner?.classList.add('hidden');
-                if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
-            }
-        }
-    } catch (e) {
-        alert("❌ Erreur de connexion.");
-        if (verifyBtn) {
-            verifyBtn.disabled = false;
-            verifySpinner?.classList.add('hidden');
-            if (verifyBtnText) verifyBtnText.textContent = "Valider le code";
-        }
-    }
-}
 
 // ── RENVOYER LE CODE ─────────────────────────────────────
 async function renvoyerCode() {
@@ -392,9 +242,9 @@ async function renvoyerCode() {
     document.getElementById('codeScreen').classList.add('hidden');
     document.getElementById('loginForm').classList.remove('hidden');
     const submitBtn = document.getElementById('submitBtn');
-    const btnText   = document.getElementById('btnText');
+    const btnText = document.getElementById('btnText');
     if (submitBtn) submitBtn.disabled = false;
-    if (btnText)   btnText.textContent = "Se connecter";
+    if (btnText) btnText.textContent = "Se connecter";
 }
 
 async function handleRegister(event) {
@@ -403,14 +253,14 @@ async function handleRegister(event) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     try {
-        const res = await fetch(`${API_AUTH}/register`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ nom, email, password }) 
+        const res = await fetch(`${API_AUTH}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nom, email, password })
         });
-        if (res.ok) { 
-            alert("✅ Inscription réussie !"); 
-            window.location.replace('se connecté.html'); 
+        if (res.ok) {
+            alert("✅ Inscription réussie !");
+            window.location.replace('se connecté.html');
         } else { alert("❌ Erreur lors de l'inscription"); }
     } catch (e) { alert("Erreur serveur"); }
 }
@@ -430,24 +280,24 @@ async function verifierToken(token) {
 
         // Pour tous les autres cas (200 OK ou Serveur en train de dormir)
         // On renvoie "true" pour laisser l'utilisateur tranquille
-        return true; 
+        return true;
 
     } catch (e) {
         // Si le réseau plante ou que Render dort, on ne bloque pas l'utilisateur
         console.warn("Le serveur est lent, attente du réveil...");
-        return true; 
+        return true;
     }
 }
 
 function seDeconnecter(event) {
     if (event) event.preventDefault();
-    
+
     // 1. On vide TOUTE la mémoire (Token et Nom)
-    localStorage.clear(); 
-    
+    localStorage.clear();
+
     // 2. On remplace la page actuelle dans l'historique par le login
     // Cela empêche physiquement de faire "Retour" vers le Dashboard
-    window.location.replace('se connecté.html'); 
+    window.location.replace('se connecté.html');
 }
 
 // ============================================================
@@ -560,7 +410,7 @@ async function handleForgotPassword(event) {
     if (event) event.preventDefault();
     const emailInput = document.getElementById('email');
     if (!emailInput) return;
-    
+
     const email = emailInput.value.trim();
 
     try {
@@ -591,7 +441,7 @@ async function handleResetPassword(event) {
     // ÉTAPE 1 — Récupère le token depuis l'URL
     // L'URL doit ressembler à : reset-password.html?token=abc123
     const urlParams = new URLSearchParams(window.location.search);
-    const token     = urlParams.get('token');
+    const token = urlParams.get('token');
 
     console.log("Token dans URL :", token); // Pour débugger
 
@@ -603,7 +453,7 @@ async function handleResetPassword(event) {
 
     // ÉTAPE 3 — Récupère les deux mots de passe
     const password = document.getElementById('newPassword')?.value;
-    const confirm  = document.getElementById('confirmPassword')?.value;
+    const confirm = document.getElementById('confirmPassword')?.value;
 
     // ÉTAPE 4 — Vérifie qu'ils correspondent
     if (!password || !confirm) {
@@ -626,9 +476,9 @@ async function handleResetPassword(event) {
         const response = await fetch(
             `${API_AUTH}/reset-password/${token}`,
             {
-                method:  'POST',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ password })
+                body: JSON.stringify({ password })
             }
         );
 
@@ -655,21 +505,21 @@ async function handleResetPassword(event) {
 // On utilise 'pageshow' pour que le code se relance même au clic sur "Retour"
 window.addEventListener('pageshow', (event) => {
     const token = getToken();
-    const path  = decodeURIComponent(window.location.pathname);
+    const path = decodeURIComponent(window.location.pathname);
     console.log("Chemin actuel :", path);
-    
-    // Liste des pages autorisées sans badge
-    const isPublic = path.includes('se connecté') || 
-                     path.includes('inscription') || 
-                     path.includes('mode pass oublie') || 
-                     path.includes('reset');
 
-                     console.log("Page publique ?", isPublic);
+    // Liste des pages autorisées sans badge
+    const isPublic = path.includes('se connecté') ||
+        path.includes('inscription') ||
+        path.includes('mode pass oublie') ||
+        path.includes('reset');
+
+    console.log("Page publique ?", isPublic);
 
     // 🛡️ 1. LE GARDIEN IMMÉDIAT (Éjection si pas de badge)
     if (!token && !isPublic) {
         window.location.replace('se connecté.html');
-        return; 
+        return;
     }
 
     // 🛡️ 2. VÉRIFICATION RÉELLE AVEC LE SERVEUR
@@ -677,7 +527,7 @@ window.addEventListener('pageshow', (event) => {
         verifierToken(token).then(valide => {
             if (!valide) {
                 // Si le serveur dit NON (ex: après une déconnexion) -> Éjection
-                seDeconnecter(); 
+                seDeconnecter();
                 return;
             }
             // Si c'est bon, on affiche la page et on active les boutons
@@ -702,14 +552,14 @@ function finaliserInitialisation() {
 
     // 🟢 AJOUT : On branche le formulaire du code à 6 chiffres
     // On cherche le formulaire à l'intérieur de ta div #codeScreen
-    const verifyForm = document.querySelector('#codeScreen form'); 
+    const verifyForm = document.querySelector('#codeScreen form');
     if (verifyForm) {
         console.log("Écouteur du code de sécurité activé");
         verifyForm.addEventListener('submit', handleVerifyCode);
     }
 
     // 🟢 3. BRANCHER LE FORMULAIRE DE CRÉATION D'HÔTEL (Cloudinary)
-     const addForm = document.getElementById('addHotelForm');
+    const addForm = document.getElementById('addHotelForm');
     if (addForm) {
         addForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -720,7 +570,7 @@ function finaliserInitialisation() {
     // 4. Chargement des données réelles
     if (document.getElementById('hotelsGrid')) chargerHotels();
     if (document.getElementById('statHotels')) chargerStatsDashboard();
-    
+
     // 5. Affichage du nom
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
