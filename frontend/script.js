@@ -405,7 +405,7 @@ async function chargerNotifications() {
         notifMenu.innerHTML = html;
     } catch (e) { console.error("Erreur notifs:", e); }
 }
-// pour le Email de réinitialisation du mot de passe,
+
 // ── FONCTION MOT DE PASSE OUBLIÉ (LIAISON BACKEND) ──
 async function handleForgotPassword(event) {
     if (event) event.preventDefault();

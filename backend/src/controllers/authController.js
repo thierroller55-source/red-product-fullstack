@@ -157,33 +157,72 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-// ── 4. MOT DE PASSE OUBLIÉ ──
+
+// — 4. MOT DE PASSE OUBLIÉ —
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(404).json({ success: false, message: "Message refusé" });
+    if (!user) return res.status(404).json({ 
+      success: false, 
+      message: "Aucun compte avec cet email." 
+    });
 
     const token = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
     await user.save();
 
-    // ✅ CORRECT — GitHub Pages
-    const resetUrl = `https://thierroller55-source.github.io/red-product-fullstack/frontend/reset-password.html?token=${token}`;
-    try {
-      await transporter.sendMail({
-        from: '"RED PRODUCT" <thierroller55@gmail.com>',
-        to: user.email,
-        subject: "Réinitialisation de votre mot de passe",
-        html: `<h4>Bonjour ${user.nom},</h4><p>Lien : <a href="${resetUrl}">${resetUrl}</a></p>`
-      });
-      res.status(200).json({ success: true, message: "Accès passé" });
-    } catch (mailErr) {
-      res.status(200).json({ success: true, message: "Accès passé (Mail en test)", debugToken: token });
-    }
+    const resetUrl = `https://red-product-fullstack-6bal.vercel.app/reset-password.html?token=${token}`;
+
+    await axios.post('https://api.brevo.com/v3/smtp/email', {
+      sender: { name: "RED PRODUCT", email: "thierroller55@gmail.com" },
+      to: [{ email: user.email }],
+      subject: "Réinitialisation de votre mot de passe",
+      htmlContent: `
+<div style="font-family:Arial;max-width:600px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;">
+  <div style="background:#1a1a1a;padding:25px;text-align:center;">
+    <h1 style="color:#e63946;margin:0;letter-spacing:2px;">RED PRODUCT</h1>
+    <p style="color:#aaa;margin:5px 0 0;font-size:13px;">Plateforme de gestion hôtelière</p>
+  </div>
+  <div style="padding:35px;">
+    <h2 style="color:#1a1a1a;">Bonjour ${user.nom} 👋</h2>
+    <p style="color:#555;font-size:15px;line-height:1.6;">
+      Vous avez demandé à réinitialiser votre mot de passe.<br>
+      Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.
+    </p>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${resetUrl}" 
+         style="background:#e63946;color:#fff;padding:14px 40px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:bold;display:inline-block;">
+        🔐 Réinitialiser mon mot de passe
+      </a>
+    </div>
+    <p style="color:#999;font-size:12px;text-align:center;">
+      Ce lien expire dans <strong>1 heure</strong>.<br>
+      Si vous n'avez pas fait cette demande, ignorez cet email.
+    </p>
+  </div>
+  <div style="background:#1a1a1a;padding:15px;text-align:center;">
+    <p style="color:#666;font-size:12px;margin:0;">© 2026 RED PRODUCT — Tous droits réservés</p>
+  </div>
+</div>`
+    }, {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Email de réinitialisation envoyé !" 
+    });
+
   } catch (error) {
-    res.status(500).json({ success: false, message: "Erreur technique" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Erreur technique" 
+    });
   }
 };
 
@@ -192,14 +231,33 @@ exports.resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
-    const user = await User.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } });
-    if (!user) return res.status(400).json({ message: "Lien invalide ou expiré." });
 
-    user.password = await bcrypt.hash(password, 10);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
-    res.json({ success: true, message: "Mot de passe modifié avec succès !" });
+    const user = await User.findOne({ 
+      resetPasswordToken: token, 
+      resetPasswordExpires: { $gt: Date.now() } 
+    });
+    
+    if (!user) return res.status(400).json({ 
+      message: "Lien invalide ou expiré." 
+    });
+
+    // Hash le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Force la mise à jour avec updateOne pour éviter les problèmes Mongoose
+    await User.updateOne(
+      { _id: user._id },
+      { 
+        $set: { password: hashedPassword },
+        $unset: { resetPasswordToken: "", resetPasswordExpires: "" }
+      }
+    );
+
+    res.json({ 
+      success: true, 
+      message: "Mot de passe modifié avec succès !" 
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Erreur réinitialisation" });
   }
