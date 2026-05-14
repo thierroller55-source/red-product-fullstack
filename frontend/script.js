@@ -1,11 +1,11 @@
 // ============================================================
 // 1. CONFIGURATION ET CONSTANTES
 // ============================================================
-// const API_HOTELS = 'http://localhost:3000/api/hotels';
-// const API_AUTH   = 'http://localhost:3000/api/auth';
+const API_HOTELS = 'http://localhost:3000/api/hotels';
+const API_AUTH   = 'http://localhost:3000/api/auth';
 //    lien deploiyement render
-const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
-const API_AUTH = 'https://red-product-fullstack.onrender.com/api/auth';
+// const API_HOTELS = 'https://red-product-fullstack.onrender.com/api/hotels';
+// const API_AUTH = 'https://red-product-fullstack.onrender.com/api/auth';
 
 const getToken = () => localStorage.getItem('token');
 // ✅ AJOUTE ICI — Variables 2FA
@@ -252,6 +252,8 @@ async function handleRegister(event) {
     event.preventDefault();
     const nom = document.getElementById('name').value;
     const email = document.getElementById('email').value;
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
     const password = document.getElementById('password').value;
     try {
         const res = await fetch(`${API_AUTH}/register`, {

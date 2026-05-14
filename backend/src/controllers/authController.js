@@ -99,13 +99,19 @@ exports.login = async (req, res) => {
       message: "Adresse email introuvable."
     });
 
+    // ✅ Vérifier le mot de passe
     const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({
+      success: false,
+      message: "Mot de passe incorrect."
+    });
+
+    // Vérifier si le compte est actif
     if (!user.isActive) return res.status(403).json({
       success: false,
       message: "Vérifie ton email pour activer ton compte."
     });
 
-    // Génère le token JWT directement
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -232,34 +238,31 @@ exports.resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    const user = await User.findOne({ 
-      resetPasswordToken: token, 
-      resetPasswordExpires: { $gt: Date.now() } 
+    // Vérifier le token
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
     });
-    
-    if (!user) return res.status(400).json({ 
-      message: "Lien invalide ou expiré." 
+
+    if (!user) return res.status(400).json({
+      message: "Lien invalide ou expiré."
     });
 
     // Hash le nouveau mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Force la mise à jour avec updateOne pour éviter les problèmes Mongoose
-    await User.updateOne(
-      { _id: user._id },
-      { 
-        $set: { password: hashedPassword },
-        $unset: { resetPasswordToken: "", resetPasswordExpires: "" }
-      }
-    );
 
-    res.json({ 
-      success: true, 
-      message: "Mot de passe modifié avec succès !" 
+    // ✅ Utilise save() au lieu de updateOne()
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Mot de passe modifié avec succès !"
     });
 
   } catch (error) {
     res.status(500).json({ message: "Erreur réinitialisation" });
   }
 };
-
