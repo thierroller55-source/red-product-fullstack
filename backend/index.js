@@ -14,7 +14,7 @@ connectDB();
 app.use(
   cors({
     origin: [
-      'https://red-product-fullstack-6bal.vercel.app',
+    'https://red-product-fullstack-6bal.vercel.app',
     'http://localhost:5501',
     'http://127.0.0.1:5501',
     ],
