@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-     <!-- 1. 🟢 BLOQUER LE FLASH : On rend la page invisible immédiatement -->
+    <!-- 1. 🟢 BLOQUER LE FLASH : On rend la page invisible immédiatement -->
     <style>
-        body { display: none !important; }
+        body {
+            display: none !important;
+        }
     </style>
 
     <!-- 2. 🟢 LE GARDIEN ULTRA-RAPIDE -->
     <script>
-        (function() {
+        (function () {
             const token = localStorage.getItem('token');
             const path = decodeURIComponent(window.location.pathname);
-            
+
             // Si on n'a pas de badge sur une page privée, on éjecte IMMEDIATEMENT
             if (!token && !path.includes('se connecté') && !path.includes('inscription')) {
                 window.location.replace('se connecté.html');
@@ -24,7 +27,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
 </head>
 
 
@@ -123,14 +126,15 @@
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
                     </svg>
-                    <input type="text" placeholder="Recherche" class="pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full
-                               text-xs text-gray-600 w-36 focus:outline-none focus:ring-2
-                               focus:ring-gray-300 focus:w-48 transition-all duration-200" />
+                    <!-- 🟢 AJOUT DE id="searchInput" ICI -->
+                    <input type="text" id="searchInput" placeholder="Recherche" class="pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full
+               text-xs text-gray-600 w-36 focus:outline-none focus:ring-2
+               focus:ring-gray-300 focus:w-48 transition-all duration-200" />
                 </div>
 
                 <!-- Recherche mobile -->
                 <button onclick="toggleSearchMobile()" class="sm:hidden w-8 h-8 bg-gray-50 hover:bg-gray-100 rounded-full
-                           flex items-center justify-center transition-colors">
+           flex items-center justify-center transition-colors">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
                         viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="8" />
@@ -138,7 +142,6 @@
                     </svg>
                 </button>
 
-                <!-- Cloche -->
                 <!-- On entoure le tout d'une div relative pour positionner le menu -->
                 <div class="relative">
                     <!-- Bouton Cloche avec ID pour le JS -->
@@ -185,7 +188,7 @@
 
                 <!-- Déconnexion -->
                 <!-- On remplace le href par un appel à la fonction seDeconnecter -->
-                 <a href="#" onclick="seDeconnecter(event)"
+                <a href="#" onclick="seDeconnecter(event)"
                     class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-colors text-gray-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />

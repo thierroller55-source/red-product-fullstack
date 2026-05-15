@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-   <!-- 1. 🟢 BLOQUER LE FLASH : On rend la page invisible immédiatement -->
+    <!-- 1. 🟢 BLOQUER LE FLASH : On rend la page invisible immédiatement -->
     <style>
-        body { display: none !important; }
+        body {
+            display: none !important;
+        }
     </style>
 
     <!-- 2. 🟢 LE GARDIEN ULTRA-RAPIDE -->
     <script>
-        (function() {
+        (function () {
             const token = localStorage.getItem('token');
             const path = decodeURIComponent(window.location.pathname);
-            
+
             // Si on n'a pas de badge sur une page privée, on éjecte IMMEDIATEMENT
             if (!token && !path.includes('se connecté') && !path.includes('inscription')) {
                 window.location.replace('se connecté.html');
@@ -25,15 +28,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="tailwind.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
 </head>
 
 <body class="bg-gray-100 h-screen flex overflow-hidden">
-    
+
     <!-- ✅ Overlay mobile -->
     <div id="sidebarOverlay" onclick="fermerMenu()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
-     <!-- ✅ SIDEBAR — cachée sur mobile, visible sur lg -->
+    <!-- ✅ SIDEBAR — cachée sur mobile, visible sur lg -->
     <aside id="sidebar" class="w-48 bg-gray-700 flex flex-col justify-between py-6 px-4
                fixed top-0 left-0 h-full z-40
                transform -translate-x-full lg:translate-x-0
@@ -93,45 +96,120 @@
 
     <!-- ===== MAIN CONTENT ===== -->
     <div class="flex-1 lg:ml-56 flex flex-col overflow-hidden">
-        
-        <!-- TOPBAR -->
-        <header class="bg-white border-b h-16 flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
-            <div class="flex items-center gap-4">
-                <button onclick="ouvrirMenu()" class="lg:hidden text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-width="2"/></svg></button>
-                <h1 class="text-lg font-bold text-gray-800">Liste des hôtels</h1>
+
+        <!-- TOP BAR -->
+        <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+
+            <!-- Gauche : hamburger + titre -->
+            <div class="flex items-center gap-3">
+
+                <!-- ✅ Bouton hamburger — visible SEULEMENT sur mobile -->
+                <button id="btnMenu" onclick="ouvrirMenu()" class="lg:hidden w-8 h-8 bg-gray-50 hover:bg-gray-100 rounded-lg
+                           flex items-center justify-center transition-colors">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+                <h1 class="text-xl md:text-3xl font-bold text-gray-800">Liste des hôtels</h1>
             </div>
 
-            <div class="flex items-center gap-5">
-                <!-- Recherche -->
-                <div class="relative hidden md:block">
-                    <input type="text" id="searchInput" oninput="filterHotels()" placeholder="Rechercher..." class="pl-10 pr-4 py-1.5 bg-gray-100 border-none rounded-full text-xs w-48 focus:ring-2 focus:ring-gray-300 transition-all">
-                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="2"/></svg>
+            <!-- Droite : recherche + icônes -->
+            <div class="flex items-center gap-2">
+
+                <!-- Recherche desktop -->
+                <div class="relative hidden sm:block">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none"
+                        stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <!-- 🟢 AJOUT DE id="searchInput" ICI -->
+                    <input type="text" id="searchInput" placeholder="Recherche" class="pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full
+               text-xs text-gray-600 w-36 focus:outline-none focus:ring-2
+               focus:ring-gray-300 focus:w-48 transition-all duration-200" />
                 </div>
 
-                <!-- 🔔 Notifications -->
+                <!-- Recherche mobile -->
+                <button onclick="toggleSearchMobile()" class="sm:hidden w-8 h-8 bg-gray-50 hover:bg-gray-100 rounded-full
+           flex items-center justify-center transition-colors">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                </button>
+
+                <!-- On entoure le tout d'une div relative pour positionner le menu -->
                 <div class="relative">
-                    <button id="notifBtn" class="relative text-gray-500 hover:text-gray-800 transition-colors pt-1">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-width="2"/></svg>
-                        <span class="absolute -top-0.5 -right-0.5 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md hidden">0</span>
+                    <!-- Bouton Cloche avec ID pour le JS -->
+                    <button id="notifBtn"
+                        class="relative w-8 h-8 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-colors focus:outline-none">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+                        </svg>
+                        <span
+                            class="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                            3
+                        </span>
                     </button>
-                    <!-- Menu Notifications -->
-                    <div id="notifMenu" class="hidden absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-2xl z-50 border border-gray-100 overflow-hidden">
-                        <div class="p-3 border-b font-bold text-xs bg-gray-50 uppercase tracking-tighter">Notifications</div>
-                        <div id="notifList" class="max-h-60 overflow-y-auto">
-                            <!-- Rempli par le JS -->
+
+                    <!-- Menu des notifications (caché au début) -->
+                    <div id="notifMenu"
+                        class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                        <div class="p-3 border-b border-gray-100 font-bold text-xs text-gray-700">Notifications</div>
+                        <div class="max-h-64 overflow-y-auto">
+                            <div class="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer">
+                                <p class="text-[11px] text-gray-800 font-medium">Nouvel hôtel ajouté !</p>
+                                <p class="text-[10px] text-gray-400">Il y a 5 minutes</p>
+                            </div>
+                            <div class="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer">
+                                <p class="text-[11px] text-gray-800 font-medium">Bienvenue sur RED PRODUCT</p>
+                                <p class="text-[10px] text-gray-400">Hier à 14:30</p>
+                            </div>
+                        </div>
+                        <div class="p-2 text-center">
+                            <a href="#" class="text-[10px] text-orange-400 font-bold hover:underline">Tout marquer comme
+                                lu</a>
                         </div>
                     </div>
                 </div>
 
-                <img src="image/propriete.png" class="w-8 h-8 rounded-full object-cover">
-                
+                <!-- Avatar -->
+                <div class="relative">
+                    <img src="image/propriete.png" alt="Avatar"
+                        class="w-8 h-8 rounded-full object-cover cursor-pointer" />
+                    <span
+                        class="absolute bottom-0 right-0 w-2 h-2 bg-green-400 rounded-full border border-white"></span>
+                </div>
+
                 <!-- Déconnexion -->
-                <button onclick="seDeconnecter(event)" class="text-gray-400 hover:text-red-500 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2"/></svg>
-                </button>
+                <!-- On remplace le href par un appel à la fonction seDeconnecter -->
+                <a href="#" onclick="seDeconnecter(event)"
+                    class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-colors text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                    </svg>
+                </a>
             </div>
         </header>
 
+        <!-- ✅ Barre recherche mobile déroulante -->
+        <div id="searchMobile" class="hidden bg-white border-b border-gray-200 px-4 py-2">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none"
+                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input type="text" placeholder="Rechercher..." class="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200
+                           rounded-full text-xs text-gray-600 focus:outline-none
+                           focus:ring-2 focus:ring-gray-300" />
+            </div>
+        </div>
+        
         <main class="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50">
             <!-- Header Section -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -139,7 +217,9 @@
                     <h2 class="text-2xl font-light text-gray-700">Hôtels</h2>
                     <span id="hotelCount" class="text-2xl font-thin text-gray-400 border-l pl-3">0</span>
                 </div>
-                <button onclick="openModal()" class="bg-white border border-gray-300 px-5 py-2 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm">+ Créer un nouveau hôtel</button>
+                <button onclick="openModal()"
+                    class="bg-white border border-gray-300 px-5 py-2 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition shadow-sm">+
+                    Créer un nouveau hôtel</button>
             </div>
 
             <!-- Grille des Hôtels -->
@@ -155,103 +235,106 @@
     </div>
 
     <!-- ===== MODAL CRÉER UN HÔTEL (STYLE IMAGE 2) ===== -->
-<div id="modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+    <!-- Le conteneur noir transparent -->
+<div id="modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    
+    <!-- La carte blanche (C'est ici qu'on règle le débordement) -->
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
         
-        <!-- Header modal -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest">
-                Créer un nouveau hôtel
-            </h2>
-            <button onclick="closeModal()"
-                class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center text-gray-400 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+        <!-- Header du modal (fixe) -->
+        <div class="p-6 border-b flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800">Ajouter un hôtel</h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
-        <!-- Body modal -->
-<!-- ✅ Version propre : on enlève le "onsubmit" -->
-<form id="addHotelForm" class="p-6 flex flex-col gap-5">            
-            <!-- Ligne 1 : Nom + Adresse -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs text-gray-700 font-semibold">Nom de l'hôtel</label>
-                    <input type="text" id="newNom" placeholder="Nom de l'hôtel" required
-                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs text-gray-700 font-semibold">Adresse</label>
-                    <input type="text" id="newAdresse" placeholder="Les îles du saloum, Mar Lodj" required
-                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
-                </div>
-            </div>
-
-            <!-- Ligne 2 : Email + Téléphone -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs text-gray-700 font-semibold">E-mail</label>
-                    <input type="email" id="newEmail" placeholder="information@gmail.com" required
-                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs text-gray-700 font-semibold">Numéro de téléphone</label>
-                    <input type="text" id="newTel" placeholder="+221 77 777 77 77" required
-                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
-                </div>
-            </div>
-
-            <!-- Ligne 3 : Prix + Devise -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs text-gray-700 font-semibold">Prix par nuit</label>
-                    <input type="text" id="newPrix" placeholder="25.000 XOF" required
-                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-xs text-gray-700 font-semibold">Devise</label>
-                    <select id="newDevise"
-                        class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 bg-white transition cursor-pointer">
-                        <option value="F XOF" selected>F XOF</option>
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Zone Photo -->
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs text-gray-700 font-semibold">Ajouter une photo</label>
-                <div class="border-2 border-dashed border-gray-200 rounded-xl h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition relative overflow-hidden"
-                    onclick="document.getElementById('photoInput').click()">
-                    
-                    <!-- Icône Paysage + Texte -->
-                    <div id="uploadPlaceholder" class="flex flex-col items-center">
-                        <svg class="w-12 h-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p class="text-gray-400 text-sm font-medium">Ajouter une photo</p>
+        <!-- Corps du formulaire (SCROLLABLE) -->
+        <div class="p-6 overflow-y-auto">
+            <form id="addHotelForm" class="space-y-4">
+                <!-- Ligne 1 : Nom + Adresse -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs text-gray-700 font-semibold">Nom de l'hôtel</label>
+                        <input type="text" id="newNom" placeholder="Nom de l'hôtel" required
+                            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
                     </div>
-
-                    <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewPhoto(event)" />
-                    <!-- L'image de prévisualisation qui couvrira la zone une fois choisie -->
-                    <img id="preview" src="" alt="preview" class="hidden absolute inset-0 w-full h-full object-cover" />
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs text-gray-700 font-semibold">Adresse</label>
+                        <input type="text" id="newAdresse" placeholder="Les îles du saloum, Mar Lodj" required
+                            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                    </div>
                 </div>
-            </div>
 
-            <!-- Bouton Enregistrer -->
-            <div class="flex justify-end mt-2">
-                <button type="submit"
-                    class="bg-[#343a40] hover:bg-black text-white text-sm font-bold px-12 py-3 rounded-lg transition shadow-md">
-                    Enregistrer
-                </button>
-            </div>
-        </form>
+                <!-- Ligne 2 : Email + Téléphone -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs text-gray-700 font-semibold">E-mail</label>
+                        <input type="email" id="newEmail" placeholder="information@gmail.com" required
+                            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs text-gray-700 font-semibold">Numéro de téléphone</label>
+                        <input type="text" id="newTel" placeholder="+221 77 777 77 77" required
+                            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                    </div>
+                </div>
+
+                <!-- Ligne 3 : Prix + Devise -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs text-gray-700 font-semibold">Prix par nuit</label>
+                        <input type="text" id="newPrix" placeholder="25.000 XOF" required
+                            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs text-gray-700 font-semibold">Devise</label>
+                        <select id="newDevise"
+                            class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 bg-white transition cursor-pointer">
+                            <option value="F XOF" selected>F XOF</option>
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Zone Photo -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs text-gray-700 font-semibold">Ajouter une photo</label>
+                    <div class="border-2 border-dashed border-gray-200 rounded-xl h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition relative overflow-hidden"
+                        onclick="document.getElementById('photoInput').click()">
+
+                        <!-- Icône Paysage + Texte -->
+                        <div id="uploadPlaceholder" class="flex flex-col items-center">
+                            <svg class="w-12 h-12 text-gray-300 mb-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-gray-400 text-sm font-medium">Ajouter une photo</p>
+                        </div>
+
+                        <input type="file" id="photoInput" accept="image/*" class="hidden"
+                            onchange="previewPhoto(event)" />
+                        <!-- L'image de prévisualisation qui couvrira la zone une fois choisie -->
+                        <img id="preview" src="" alt="preview"
+                            class="hidden absolute inset-0 w-full h-full object-cover" />
+                    </div>
+                </div>
+
+                <!-- Bouton Enregistrer -->
+                <div class="flex justify-end mt-2">
+                    <button type="submit"
+                        class="bg-[#343a40] hover:bg-black text-white text-sm font-bold px-12 py-3 rounded-lg transition shadow-md">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
     <!-- Chargement du script -->
     <script src="script.js"></script>
 </body>
+
 </html>

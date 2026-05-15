@@ -501,6 +501,29 @@ async function handleResetPassword(event) {
     }
 }
 
+// 🟢 ET PLACE LA FONCTION JUSTE EN DESSOUS :
+function filterHotels() {
+    // 1. On récupère TOUS les inputs qui ont un placeholder contenant "Recherch"
+    const inputs = document.querySelectorAll('input[placeholder*="Recherch"]');
+    
+    // 2. On trouve la valeur tapée (peu importe l'input utilisé)
+    let query = "";
+    inputs.forEach(input => {
+        if (input.value) query = input.value.toLowerCase();
+    });
+
+    // 3. On filtre les cartes
+    const cards = document.querySelectorAll('.hotel-card');
+    cards.forEach(card => {
+        const searchData = card.getAttribute('data-search') || "";
+        if (searchData.includes(query)) {
+            card.style.setProperty('display', 'block', 'important');
+        } else {
+            card.style.setProperty('display', 'none', 'important');
+        }
+    });
+}
+
 // ============================================================
 // 5. INITIALISATION (SÉCURITÉ MAXIMALE & VITESSE)
 // ============================================================
@@ -578,8 +601,17 @@ function finaliserInitialisation() {
     const savedName = localStorage.getItem('userName');
     const nameEl = document.getElementById('userNameDisplay');
     if (nameEl && savedName) nameEl.textContent = savedName;
+     
+     // 🟢 ACTIVE LA RECHERCHE SUR TOUS LES CHAMPS (ORDI ET MOBILE)
+    const allSearchInputs = document.querySelectorAll('input[placeholder*="Recherch"]');
+    allSearchInputs.forEach(input => {
+        input.addEventListener('input', filterHotels);
+    });
 
     // 🟢 6. ACTIVER LA CLOCHE
     setupNotifications();
 }
+
+
+
 
